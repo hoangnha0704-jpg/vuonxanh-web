@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi" data-pretty="1">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cây Phát Tài – Vườn Xanh</title>
+  <meta name="description" content="Cây Phát Tài tại Vườn Xanh: Cây phát tài (thiết mộc lan) mang lại may mắn, thịnh vượng.">
+  <link rel="canonical" href="https://__DOMAIN__/danh-muc-phat-tai/">
+  
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Cây Phát Tài – Vườn Xanh">
+  <meta property="og:description" content="Cây Phát Tài tại Vườn Xanh: Cây phát tài (thiết mộc lan) mang lại may mắn, thịnh vượng.">
+  <meta property="og:url" content="https://__DOMAIN__/danh-muc-phat-tai/">
+  <meta property="og:site_name" content="Vườn Xanh">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- ===== THANH THÔNG BÁO ===== -->
+<div class="announce">
+  <div class="container announce-inner">
+    <span>🚚 Giao nhanh trong ngày nội thành · Miễn phí đơn từ 500.000₫</span>
+    <span class="announce-right">Hotline <b class="js-hotline">0900.000.000</b></span>
+  </div>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Mở menu">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    <a href="/" class="logo" aria-label="Vườn Xanh – Trang chủ">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#2f6b45"/>
+        <path d="M20 31V17" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <path d="M20 21c-6 0-9-4-9-9 6 0 9 4 9 9zM20 18c0-5 3-8 9-8 0 5-3 8-9 8z" fill="#cfe5c4"/></svg>
+      <span><b>Vườn Xanh</b><small>Cây cảnh trong nhà</small></span>
+    </a>
+
+    <form class="search" id="searchForm" role="search">
+      <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+      <input type="search" id="searchInput" placeholder="Tìm cây: kim tiền, lưỡi hổ, sen đá…" aria-label="Tìm sản phẩm">
+    </form>
+
+    <div class="header-actions">
+      <a href="/lien-he/" class="h-contact"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>
+        <span><small>Tư vấn miễn phí</small><b class="js-hotline">0900.000.000</b></span></a>
+      <a href="/mua-hang/" class="cart" id="cartBtn" aria-label="Giỏ hàng">
+        <svg viewBox="0 0 24 24"><path d="M5 7h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+        <span class="cart-count" id="cartQty">0</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Menu chính -->
+  <nav class="nav" id="nav" aria-label="Menu chính">
+    <div class="container nav-inner">
+      <a href="/" data-nav="trang-chu">Trang chủ</a>
+      <div class="nav-dd mega-wrap">
+        <a href="/san-pham/" data-nav="san-pham">Sản phẩm <i class="chev"></i></a>
+        <div class="mega" id="megaMenu"></div>
+      </div>
+      <a href="/danh-muc-kim-tien/" data-nav="cay-mua-nhieu" class="hide-lg">Cây mua nhiều</a>
+      <div class="nav-dd">
+        <a href="/cham-soc/" data-nav="cham-soc">Cách chăm sóc <i class="chev"></i></a>
+        <div class="dd" id="careMenu"></div>
+      </div>
+      <a href="/du-an/" data-nav="du-an">Dự án</a>
+      <a href="/tin-tuc/" data-nav="tin-tuc">Tin tức</a>
+      <a href="/gioi-thieu/" data-nav="gioi-thieu">Giới thiệu</a>
+      <div class="nav-dd">
+        <a href="/chinh-sach-chung/" data-nav="chinh-sach">Chính sách <i class="chev"></i></a>
+        <div class="dd" id="policyMenu"></div>
+      </div>
+      <a href="/ban-do/" data-nav="ban-do">Bản đồ</a>
+      <a href="/lien-he/" data-nav="lien-he">Liên hệ</a>
+      <a href="/mua-hang/" data-nav="mua-hang" class="nav-cart">Mua hàng</a>
+    </div>
+  </nav>
+</header>
+<div class="overlay" id="overlay"></div>
+
+<!-- ===== NỘI DUNG (script.js vẽ từng trang vào đây) ===== -->
+<main id="app"><div class="container page-head">
+  <nav class="crumbs" aria-label="Đường dẫn"><a href="/">Trang chủ</a><span>/</span><a href="/san-pham/">Sản phẩm</a><span>/</span><span>Cây Phát Tài</span></nav>
+  <h1 class="page-title">Cây Phát Tài</h1><p class="page-lead">Cây phát tài (thiết mộc lan) mang lại may mắn, thịnh vượng.</p></div>
+  <div class="container shop">
+    <aside class="filters" id="filters">
+      <div class="f-group"><h5>Danh mục</h5><div class="f-cats">
+        <a href="/san-pham/" class="">Tất cả <em>37</em></a>
+        <a href="/danh-muc-phong-thuy/" class="">Cây Cảnh Phong Thủy <em>10</em></a><a href="/danh-muc-trong-nha/" class="">Cây Cảnh Trong Nhà <em>4</em></a><a href="/danh-muc-de-ban/" class="">Cây Cảnh Để Bàn <em>14</em></a><a href="/danh-muc-van-phong/" class="">Cây Cảnh Văn Phòng <em>10</em></a><a href="/danh-muc-loai-to/" class="">Cây Cảnh Loại To <em>7</em></a><a href="/danh-muc-thuy-sinh/" class="">Cây Thủy Sinh <em>3</em></a><a href="/danh-muc-day-leo/" class="">Cây Dây Leo <em>3</em></a><a href="/danh-muc-xuong-rong/" class="">Xương Rồng Cảnh <em>3</em></a><a href="/danh-muc-sen-da/" class="">Cây Sen Đá <em>2</em></a><a href="/danh-muc-cong-trinh/" class="">Cây Công Trình <em>6</em></a><a href="/danh-muc-phu-kien/" class="">Phụ Kiện <em>4</em></a><a href="/danh-muc-kim-tien/" class="">Cây Kim Tiền <em>2</em></a><a href="/danh-muc-kim-ngan/" class="">Cây Kim Ngân <em>3</em></a><a href="/danh-muc-phat-tai/" class="on">Cây Phát Tài <em>2</em></a><a href="/danh-muc-hanh-phuc/" class="">Cây Hạnh Phúc <em>2</em></a><a href="/danh-muc-trau-ba/" class="">Cây Trầu Bà <em>2</em></a><a href="/danh-muc-bang-singapore/" class="">Cây Bàng Singapore <em>2</em></a><a href="/danh-muc-luoi-ho/" class="">Cây Lưỡi Hổ <em>2</em></a><a href="/danh-muc-phu-quy/" class="">Cây Phú Quý <em>2</em></a></div></div>
+      <div class="f-group"><h5>Khoảng giá</h5><label class="f-opt"><input type="checkbox" data-fprice="p1"> Dưới 200.000₫</label><label class="f-opt"><input type="checkbox" data-fprice="p2"> 200.000₫ – 500.000₫</label><label class="f-opt"><input type="checkbox" data-fprice="p3"> 500.000₫ – 1.000.000₫</label><label class="f-opt"><input type="checkbox" data-fprice="p4"> Trên 1.000.000₫</label></div>
+      <div class="f-group"><h5>Nơi đặt cây</h5><label class="f-opt"><input type="checkbox" data-flight="bong"> Chịu bóng, ít sáng</label><label class="f-opt"><input type="checkbox" data-flight="sang"> Trong nhà có ánh sáng</label><label class="f-opt"><input type="checkbox" data-flight="nang"> Ban công, có nắng</label></div>
+    </aside>
+    <div>
+      <div class="shop-bar"><span id="shopCount"><b>2</b> sản phẩm</span>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-outline filter-toggle" id="filterToggle" style="padding:8px 16px">Bộ lọc</button>
+        <select id="shopSort" aria-label="Sắp xếp"><option value="hot">Bán chạy</option><option value="new">Mới nhất</option><option value="asc">Giá thấp → cao</option><option value="desc">Giá cao → thấp</option></select></div></div>
+      <div id="shopGrid"><div class="grid cols3"><article class="card">
+    <div class="card-img"><a href="/san-pham-16/" class="card-link" aria-label="Cây Phát Tài Núi"><svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" class="art">
+    <defs>
+      <radialGradient id="g446b" gradientUnits="userSpaceOnUse" cx="100" cy="80" r="160"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"></stop><stop offset="1" stop-color="#ffffff" stop-opacity="0"></stop></radialGradient>
+      <linearGradient id="g446p" x1="0" x2="1"><stop offset="0" stop-color="#8a5a3c"></stop><stop offset=".6" stop-color="#8a5a3c"></stop><stop offset="1" stop-color="#8a5a3c" stop-opacity=".82"></stop></linearGradient>
+    </defs>
+    <rect x="-400" y="-400" width="1000" height="1000" fill="#f1efe9"></rect><rect x="-400" y="-400" width="1000" height="1000" fill="url(#g446b)"></rect>
+    <g transform="translate(100 104) scale(.9) translate(-100 -104)"><path d="M68 134 Q66 98 74 58 Q82 98 80 134Z" fill="#2f5e2a" stroke="#9bc25a" stroke-width="2.5"></path>
+        <path d="M72 120 l4 -6 M72 102 l4 -6 M72 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M78 134 Q76 70 84 30 Q92 70 90 134Z" fill="#3c7a32" stroke="#9bc25a" stroke-width="2.5"></path>
+        <path d="M82 120 l4 -6 M82 102 l4 -6 M82 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M88 134 Q86 56 94 16 Q102 56 100 134Z" fill="#2f5e2a" stroke="#9bc25a" stroke-width="2.5"></path>
+        <path d="M92 120 l4 -6 M92 102 l4 -6 M92 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M98 134 Q96 62 104 22 Q112 62 110 134Z" fill="#3c7a32" stroke="#9bc25a" stroke-width="2.5"></path>
+        <path d="M102 120 l4 -6 M102 102 l4 -6 M102 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M108 134 Q106 76 114 36 Q122 76 120 134Z" fill="#2f5e2a" stroke="#9bc25a" stroke-width="2.5"></path>
+        <path d="M112 120 l4 -6 M112 102 l4 -6 M112 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M118 134 Q116 66 124 26 Q132 66 130 134Z" fill="#3c7a32" stroke="#9bc25a" stroke-width="2.5"></path>
+        <path d="M122 120 l4 -6 M122 102 l4 -6 M122 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M126 134 Q124 100 132 60 Q140 100 138 134Z" fill="#2f5e2a" stroke="#9bc25a" stroke-width="2.5"></path>
+        <path d="M130 120 l4 -6 M130 102 l4 -6 M130 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M84 134 Q82 88 90 48 Q98 88 96 134Z" fill="#3c7a32" stroke="#9bc25a" stroke-width="2.5"></path>
+        <path d="M88 120 l4 -6 M88 102 l4 -6 M88 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M112 134 Q110 92 118 52 Q126 92 124 134Z" fill="#2f5e2a" stroke="#9bc25a" stroke-width="2.5"></path>
+        <path d="M116 120 l4 -6 M116 102 l4 -6 M116 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><ellipse cx="100" cy="186" rx="46" ry="6" fill="#000" opacity=".08"></ellipse>
+      <path d="M66 132 H134 L128 184 H72 Z" fill="url(#g446p)"></path>
+      <rect x="62" y="126" width="76" height="10" rx="3" fill="url(#g446p)"></rect>
+      <path d="M74 138 L78 178" stroke="#fff" stroke-width="4" opacity=".25" stroke-linecap="round"></path></g></svg></a><span class="badge hot">Bán chạy</span>
+      <button class="quick-add" data-add="16" aria-label="Thêm Cây Phát Tài Núi vào giỏ">Thêm vào giỏ</button></div>
+    <div class="card-body">
+      <span class="card-cat">Cây Phát Tài</span>
+      <a href="/san-pham-16/" class="card-name">Cây Phát Tài Núi</a>
+      <span class="card-meta">cao 100–120cm · ánh sáng tán xạ</span>
+      <span class="card-price">520.000₫</span>
+    </div>
+  </article><article class="card">
+    <div class="card-img"><a href="/san-pham-17/" class="card-link" aria-label="Cây Phát Tài Búp Sen"><svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true" class="art">
+    <defs>
+      <radialGradient id="g447b" gradientUnits="userSpaceOnUse" cx="100" cy="80" r="160"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"></stop><stop offset="1" stop-color="#ffffff" stop-opacity="0"></stop></radialGradient>
+      <linearGradient id="g447p" x1="0" x2="1"><stop offset="0" stop-color="#ffffff"></stop><stop offset=".6" stop-color="#ffffff"></stop><stop offset="1" stop-color="#ffffff" stop-opacity=".82"></stop></linearGradient>
+    </defs>
+    <rect x="-400" y="-400" width="1000" height="1000" fill="#f1efe9"></rect><rect x="-400" y="-400" width="1000" height="1000" fill="url(#g447b)"></rect>
+    <g transform="translate(100 104) scale(.9) translate(-100 -104)"><path d="M68 134 Q66 98 74 58 Q82 98 80 134Z" fill="#2f5e2a" stroke="#c9d86a" stroke-width="2.5"></path>
+        <path d="M72 120 l4 -6 M72 102 l4 -6 M72 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M78 134 Q76 70 84 30 Q92 70 90 134Z" fill="#3c7a32" stroke="#c9d86a" stroke-width="2.5"></path>
+        <path d="M82 120 l4 -6 M82 102 l4 -6 M82 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M88 134 Q86 56 94 16 Q102 56 100 134Z" fill="#2f5e2a" stroke="#c9d86a" stroke-width="2.5"></path>
+        <path d="M92 120 l4 -6 M92 102 l4 -6 M92 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M98 134 Q96 62 104 22 Q112 62 110 134Z" fill="#3c7a32" stroke="#c9d86a" stroke-width="2.5"></path>
+        <path d="M102 120 l4 -6 M102 102 l4 -6 M102 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M108 134 Q106 76 114 36 Q122 76 120 134Z" fill="#2f5e2a" stroke="#c9d86a" stroke-width="2.5"></path>
+        <path d="M112 120 l4 -6 M112 102 l4 -6 M112 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M118 134 Q116 66 124 26 Q132 66 130 134Z" fill="#3c7a32" stroke="#c9d86a" stroke-width="2.5"></path>
+        <path d="M122 120 l4 -6 M122 102 l4 -6 M122 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M126 134 Q124 100 132 60 Q140 100 138 134Z" fill="#2f5e2a" stroke="#c9d86a" stroke-width="2.5"></path>
+        <path d="M130 120 l4 -6 M130 102 l4 -6 M130 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M84 134 Q82 88 90 48 Q98 88 96 134Z" fill="#3c7a32" stroke="#c9d86a" stroke-width="2.5"></path>
+        <path d="M88 120 l4 -6 M88 102 l4 -6 M88 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><path d="M112 134 Q110 92 118 52 Q126 92 124 134Z" fill="#2f5e2a" stroke="#c9d86a" stroke-width="2.5"></path>
+        <path d="M116 120 l4 -6 M116 102 l4 -6 M116 84 l4 -6" stroke="#9fbf7a" stroke-width="1.4" opacity=".7"></path><ellipse cx="100" cy="186" rx="46" ry="6" fill="#000" opacity=".08"></ellipse>
+      <path d="M66 132 H134 L128 184 H72 Z" fill="url(#g447p)"></path>
+      <rect x="62" y="126" width="76" height="10" rx="3" fill="url(#g447p)"></rect>
+      <path d="M74 138 L78 178" stroke="#fff" stroke-width="4" opacity=".25" stroke-linecap="round"></path></g></svg></a>
+      <button class="quick-add" data-add="17" aria-label="Thêm Cây Phát Tài Búp Sen vào giỏ">Thêm vào giỏ</button></div>
+    <div class="card-body">
+      <span class="card-cat">Cây Phát Tài</span>
+      <a href="/san-pham-17/" class="card-name">Cây Phát Tài Búp Sen</a>
+      <span class="card-meta">cao 40–50cm · ánh sáng tán xạ</span>
+      <span class="card-price">220.000₫</span>
+    </div>
+  </article></div></div>
+    </div>
+  </div></main>
+
+<!-- ===== ĐIỂM MẠNH ===== -->
+<section class="perks">
+  <div class="container perks-inner">
+    <div><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg><span><b>Giao nhanh 2–4 giờ</b>Nội thành, kèm đóng gói kỹ</span></div>
+    <div><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span><b>Bảo hành 14 ngày</b>Cây hỏng đổi cây mới</span></div>
+    <div><svg viewBox="0 0 24 24"><path d="M12 21c-4-3-8-6.5-8-11a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 4.5-4 8-8 11z"/></svg><span><b>Hỗ trợ chăm cây trọn đời</b>Gửi ảnh qua Zalo để được tư vấn</span></div>
+    <div><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg><span><b>Đổi trả trong 3 ngày</b>Nếu cây lỗi do vận chuyển</span></div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container footer-top">
+    <div class="f-brand">
+      <a href="/" class="logo light">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#cfe5c4"/>
+          <path d="M20 31V17" stroke="#1f3d2b" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 21c-6 0-9-4-9-9 6 0 9 4 9 9zM20 18c0-5 3-8 9-8 0 5-3 8-9 8z" fill="#2f6b45"/></svg>
+        <span><b>Vườn Xanh</b><small>Cây cảnh trong nhà</small></span>
+      </a>
+      <p>Cây cảnh nội thất, cây văn phòng, cây phong thủy. Tư vấn chọn cây và chăm sóc trọn đời.</p>
+      <ul class="f-contact">
+        <li>📍 <span class="js-address">(điền địa chỉ)</span></li>
+        <li>📞 <span class="js-hotline">0900.000.000</span></li>
+        <li>✉ <span class="js-email">(điền email)</span></li>
+      </ul>
+    </div>
+    <div><h4>Sản phẩm</h4><ul id="fCats"></ul></div>
+    <div><h4>Hỗ trợ</h4><ul id="fHelp"></ul></div>
+    <div class="f-news">
+      <h4>Nhận ưu đãi & mẹo chăm cây</h4>
+      <p>Mỗi tháng một email, không spam.</p>
+      <form id="newsForm" novalidate>
+        <input type="email" id="newsEmail" placeholder="Email của bạn" aria-label="Email">
+        <button type="submit">Đăng ký</button>
+      </form>
+      <p class="form-msg" id="newsMsg"></p>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© 2026 Vườn Xanh. Người đại diện: (điền tên) · MST: (điền mã số thuế)</span>
+    <a href="/so-do-trang/">Sơ đồ trang</a>
+  </div>
+</footer>
+
+<!-- Nút liên hệ nhanh -->
+<div class="quick">
+  <a href="/lien-he/" class="q-zalo" aria-label="Chat Zalo">Zalo</a>
+  <a href="tel:0900000000" class="q-call" aria-label="Gọi điện"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></a>
+  <button class="q-top" id="toTop" aria-label="Lên đầu trang">↑</button>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="/art.js"></script>
+<script src="/data.js"></script>
+<script src="/script.js"></script>
+</body>
+</html>

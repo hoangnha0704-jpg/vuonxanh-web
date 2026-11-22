@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi" data-pretty="1">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Không tìm thấy trang – Vườn Xanh</title><meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Lora:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- ===== THANH THÔNG BÁO ===== -->
+<div class="announce">
+  <div class="container announce-inner">
+    <span>🚚 Giao nhanh trong ngày nội thành · Miễn phí đơn từ 500.000₫</span>
+    <span class="announce-right">Hotline <b class="js-hotline">0900.000.000</b></span>
+  </div>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header class="header" id="header">
+  <div class="container header-inner">
+    <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Mở menu">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    <a href="/" class="logo" aria-label="Vườn Xanh – Trang chủ">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#2f6b45"/>
+        <path d="M20 31V17" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <path d="M20 21c-6 0-9-4-9-9 6 0 9 4 9 9zM20 18c0-5 3-8 9-8 0 5-3 8-9 8z" fill="#cfe5c4"/></svg>
+      <span><b>Vườn Xanh</b><small>Cây cảnh trong nhà</small></span>
+    </a>
+
+    <form class="search" id="searchForm" role="search">
+      <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+      <input type="search" id="searchInput" placeholder="Tìm cây: kim tiền, lưỡi hổ, sen đá…" aria-label="Tìm sản phẩm">
+    </form>
+
+    <div class="header-actions">
+      <a href="/lien-he/" class="h-contact"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>
+        <span><small>Tư vấn miễn phí</small><b class="js-hotline">0900.000.000</b></span></a>
+      <a href="/mua-hang/" class="cart" id="cartBtn" aria-label="Giỏ hàng">
+        <svg viewBox="0 0 24 24"><path d="M5 7h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+        <span class="cart-count" id="cartQty">0</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Menu chính -->
+  <nav class="nav" id="nav" aria-label="Menu chính">
+    <div class="container nav-inner">
+      <a href="/" data-nav="trang-chu">Trang chủ</a>
+      <div class="nav-dd mega-wrap">
+        <a href="/san-pham/" data-nav="san-pham">Sản phẩm <i class="chev"></i></a>
+        <div class="mega" id="megaMenu"></div>
+      </div>
+      <a href="/danh-muc-kim-tien/" data-nav="cay-mua-nhieu" class="hide-lg">Cây mua nhiều</a>
+      <div class="nav-dd">
+        <a href="/cham-soc/" data-nav="cham-soc">Cách chăm sóc <i class="chev"></i></a>
+        <div class="dd" id="careMenu"></div>
+      </div>
+      <a href="/du-an/" data-nav="du-an">Dự án</a>
+      <a href="/tin-tuc/" data-nav="tin-tuc">Tin tức</a>
+      <a href="/gioi-thieu/" data-nav="gioi-thieu">Giới thiệu</a>
+      <div class="nav-dd">
+        <a href="/chinh-sach-chung/" data-nav="chinh-sach">Chính sách <i class="chev"></i></a>
+        <div class="dd" id="policyMenu"></div>
+      </div>
+      <a href="/ban-do/" data-nav="ban-do">Bản đồ</a>
+      <a href="/lien-he/" data-nav="lien-he">Liên hệ</a>
+      <a href="/mua-hang/" data-nav="mua-hang" class="nav-cart">Mua hàng</a>
+    </div>
+  </nav>
+</header>
+<div class="overlay" id="overlay"></div>
+
+<!-- ===== NỘI DUNG (script.js vẽ từng trang vào đây) ===== -->
+<main id="app"><div class="container page-head">
+  <nav class="crumbs" aria-label="Đường dẫn"><a href="/">Trang chủ</a><span>/</span><span>Không tìm thấy trang</span></nav>
+  <h1 class="page-title">Không tìm thấy trang</h1></div><div class="container"><div class="empty"><b>Trang này không tồn tại</b><a href="/" class="link-arrow">Về trang chủ</a></div></div></main>
+
+<!-- ===== ĐIỂM MẠNH ===== -->
+<section class="perks">
+  <div class="container perks-inner">
+    <div><svg viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg><span><b>Giao nhanh 2–4 giờ</b>Nội thành, kèm đóng gói kỹ</span></div>
+    <div><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><span><b>Bảo hành 14 ngày</b>Cây hỏng đổi cây mới</span></div>
+    <div><svg viewBox="0 0 24 24"><path d="M12 21c-4-3-8-6.5-8-11a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 4.5-4 8-8 11z"/></svg><span><b>Hỗ trợ chăm cây trọn đời</b>Gửi ảnh qua Zalo để được tư vấn</span></div>
+    <div><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><path d="M18 3v4h-4M6 21v-4h4"/></svg><span><b>Đổi trả trong 3 ngày</b>Nếu cây lỗi do vận chuyển</span></div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container footer-top">
+    <div class="f-brand">
+      <a href="/" class="logo light">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#cfe5c4"/>
+          <path d="M20 31V17" stroke="#1f3d2b" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 21c-6 0-9-4-9-9 6 0 9 4 9 9zM20 18c0-5 3-8 9-8 0 5-3 8-9 8z" fill="#2f6b45"/></svg>
+        <span><b>Vườn Xanh</b><small>Cây cảnh trong nhà</small></span>
+      </a>
+      <p>Cây cảnh nội thất, cây văn phòng, cây phong thủy. Tư vấn chọn cây và chăm sóc trọn đời.</p>
+      <ul class="f-contact">
+        <li>📍 <span class="js-address">(điền địa chỉ)</span></li>
+        <li>📞 <span class="js-hotline">0900.000.000</span></li>
+        <li>✉ <span class="js-email">(điền email)</span></li>
+      </ul>
+    </div>
+    <div><h4>Sản phẩm</h4><ul id="fCats"></ul></div>
+    <div><h4>Hỗ trợ</h4><ul id="fHelp"></ul></div>
+    <div class="f-news">
+      <h4>Nhận ưu đãi & mẹo chăm cây</h4>
+      <p>Mỗi tháng một email, không spam.</p>
+      <form id="newsForm" novalidate>
+        <input type="email" id="newsEmail" placeholder="Email của bạn" aria-label="Email">
+        <button type="submit">Đăng ký</button>
+      </form>
+      <p class="form-msg" id="newsMsg"></p>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© 2026 Vườn Xanh. Người đại diện: (điền tên) · MST: (điền mã số thuế)</span>
+    <a href="/so-do-trang/">Sơ đồ trang</a>
+  </div>
+</footer>
+
+<!-- Nút liên hệ nhanh -->
+<div class="quick">
+  <a href="/lien-he/" class="q-zalo" aria-label="Chat Zalo">Zalo</a>
+  <a href="tel:0900000000" class="q-call" aria-label="Gọi điện"><svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></a>
+  <button class="q-top" id="toTop" aria-label="Lên đầu trang">↑</button>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+
+
+
+</body>
+</html>
