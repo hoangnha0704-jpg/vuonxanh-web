@@ -6,9 +6,9 @@
 
 const SHOP = {
   name: "Vườn Xanh",
-  hotline: "0900.000.000",
-  email: "(điền email của bạn)",
-  address: "(điền địa chỉ cửa hàng)",
+  hotline: "0987.123.456",
+  email: "hoangnha0704@gmail.com",
+  address: "Thái Bình",
   hours: "8h sáng đến 20h tất cả các ngày trong tuần",
   founded: "(điền năm thành lập)",
 };
