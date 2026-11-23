@@ -77,7 +77,7 @@
 <body>
 <header>
   <div class="top"><b>🌿 Vườn Xanh · Quản trị</b><a href="/" target="_blank">Xem trang web ↗</a></div>
-  <nav class="tabs"><a href="#san-pham" data-tab="san-pham">Sản phẩm</a><a href="#bai-viet" data-tab="bai-viet">Bài viết tin tức</a><a href="#khach" data-tab="khach">Đơn hàng & khách</a></nav>
+  <nav class="tabs"><a href="#san-pham" data-tab="san-pham">Sản phẩm</a><a href="#danh-muc" data-tab="danh-muc">Danh mục</a><a href="#bai-viet" data-tab="bai-viet">Bài viết tin tức</a><a href="#khach" data-tab="khach">Đơn hàng & khách</a></nav>
 </header>
 <main id="main"><div class="empty">Đang tải…</div></main>
 
@@ -155,7 +155,7 @@ function suaSanPham(id) {
     <label class="f">Ánh sáng<input id="fLight" maxlength="80" placeholder="Ví dụ: ánh sáng tán xạ" value="${esc(unesc(p.light))}"></label>
     <label class="f">Mô tả ngắn<textarea id="fShort" rows="3" maxlength="600">${esc(unesc(p.short))}</textarea></label>
     <div class="f"><b style="font-size:14px">Danh mục * <small style="font-weight:400;color:var(--muted)">(chọn một hoặc nhiều)</small></b>
-      <div class="cats">${Object.entries(CATEGORIES).map(([k, c]) => `<label><input type="checkbox" name="cat" value="${k}"${p.cats.includes(k) ? " checked" : ""}> ${c.name}</label>`).join("")}</div></div>
+      <div class="cats">${Object.entries(CATEGORIES).filter(([k, c]) => !c.an || p.cats.includes(k)).map(([k, c]) => `<label><input type="checkbox" name="cat" value="${k}"${p.cats.includes(k) ? " checked" : ""}> ${c.name}</label>`).join("")}</div></div>
     <div class="checks"><label><input type="checkbox" id="fStock"${p.stock !== false ? " checked" : ""}> Còn hàng</label><label><input type="checkbox" id="fHot"${hot ? " checked" : ""}> Hiện trong "Cây bán chạy"</label></div>
     <p class="msg" id="edMsg"></p>
     <div class="actions"><div>${moi ? "" : p.an ? `<span style="color:var(--muted);font-size:14px">Sản phẩm này đang bị ẩn. Bấm Lưu để hiện lại.</span>` : `<button type="button" class="btn red" data-xoa>Xóa sản phẩm</button>`}</div>
@@ -232,11 +232,56 @@ function goiBaiViet() {
   return d;
 }
 
+// ---------------------------------------------------------------- DANH MỤC
+const NHOM_GOC_MUA = () => BEST_CATS;
+const nhomCua = (s) => (window.DM_NHOM && DM_NHOM[s]) || (NHOM_GOC_MUA().includes(s) ? "mua" : "loai");
+const soSP = (s) => PRODUCTS.filter((p) => p && !p.an && p.cats && p.cats.includes(s)).length;
+const taoSlug = (t) => unesc(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+function theDM([s, c]) {
+  return `<button class="item post" data-dm="${s}" style="cursor:pointer"><span class="tx"><b>${c.name}</b><span>${soSP(s)} sản phẩm · ${nhomCua(s) === "mua" ? "Theo tên cây" : "Theo loại cây"}</span>
+    <span class="chips">${c.an ? `<i class="chip out">Đã xóa</i>` : `<i class="chip">Đang hiện</i>`}</span></span></button>`;
+}
+function trangDanhMuc() {
+  const q = tim.toLowerCase();
+  const all = Object.entries(CATEGORIES).filter(([, c]) => unesc(c.name).toLowerCase().includes(q));
+  const hien = all.filter(([, c]) => !c.an), xoa = all.filter(([, c]) => c.an);
+  const loai = hien.filter(([s]) => nhomCua(s) === "loai"), mua = hien.filter(([s]) => nhomCua(s) === "mua");
+  return `<div class="help">Danh mục giúp khách tìm cây trong menu <b>Sản phẩm</b>. Thêm danh mục mới ở đây, rồi vào tab <b>Sản phẩm</b> tick danh mục đó cho từng cây.</div>
+    <div class="bar"><input type="search" id="tim" placeholder="Tìm danh mục…" value="${esc(tim)}"><button class="btn" data-moi="dm">+ Thêm danh mục</button></div>
+    <h2 class="sub" style="margin-top:4px">Theo loại cây (${loai.length})</h2><div class="list">${loai.map(theDM).join("") || `<div class="empty">Không có</div>`}</div>
+    <h2 class="sub">Theo tên cây – mục "Cây mua nhiều" (${mua.length})</h2><div class="list">${mua.map(theDM).join("") || `<div class="empty">Không có</div>`}</div>
+    ${xoa.length ? `<h2 class="sub">Đã xóa (${xoa.length}) – bấm để khôi phục</h2><div class="list deleted">${xoa.map(theDM).join("")}</div>` : ""}`;
+}
+function suaDanhMuc(slug) {
+  const moi = slug === "moi", c = moi ? { name: "", intro: "" } : CATEGORIES[slug], n = moi ? "loai" : nhomCua(slug);
+  dang = { loai: "dm", id: slug };
+  $("dlg").innerHTML = `<div class="dlg-head"><h3>${moi ? "Thêm danh mục mới" : "Sửa danh mục"}</h3><button class="x" data-dong aria-label="Đóng">×</button></div>
+  <form class="ed" id="edForm">
+    <label class="f">Tên danh mục * <small>Ví dụ: Cây Lan, Bonsai, Cây Ăn Quả</small><input id="fTen" required maxlength="80" value="${esc(unesc(c.name))}"></label>
+    <label class="f">Giới thiệu ngắn <small>Hiện ở đầu trang danh mục</small><textarea id="fIntro" rows="3" maxlength="400">${esc(unesc(c.intro))}</textarea></label>
+    <div class="f"><b style="font-size:14px">Hiện trong menu Sản phẩm ở cột</b>
+      <div class="checks"><label><input type="radio" name="nhom" value="loai"${n === "loai" ? " checked" : ""}> Theo loại cây</label><label><input type="radio" name="nhom" value="mua"${n === "mua" ? " checked" : ""}> Cây mua nhiều (theo tên cây)</label></div></div>
+    ${moi ? "" : `<p style="margin:0;font-size:14px;color:var(--muted)">Đang có ${soSP(slug)} sản phẩm trong danh mục này.</p>`}
+    <p class="msg" id="edMsg"></p>
+    <div class="actions"><div>${moi || c.an ? "" : `<button type="button" class="btn red" data-xoa>Xóa danh mục</button>`}</div>
+      <div>${moi || c.an ? "" : `<a class="btn ghost" href="/danh-muc-${slug}/" target="_blank">Xem trên web ↗</a>`}<button class="btn" type="submit" id="edLuu">${c.an ? "Lưu và hiện lại" : "Lưu"}</button></div></div>
+  </form>`;
+  $("dlg").showModal();
+}
+function goiDanhMuc() {
+  const moi = dang.id === "moi", name = $("fTen").value;
+  if (!name.trim()) throw new Error("Chưa nhập tên danh mục.");
+  const slug = moi ? taoSlug(name) : dang.id;
+  if (!slug) throw new Error("Tên danh mục cần có chữ hoặc số.");
+  if (moi && CATEGORIES[slug] && !CATEGORIES[slug].an) throw new Error("Đã có danh mục tên giống vậy.");
+  return { moi, slug, name, intro: $("fIntro").value, nhom: (document.querySelector("input[name=nhom]:checked") || {}).value || "loai" };
+}
+
 // ---------------------------------------------------------------- KHUNG CHUNG
 function ve() {
   const tab = (location.hash.slice(1) || "san-pham");
   document.querySelectorAll("[data-tab]").forEach((a) => a.classList.toggle("on", a.dataset.tab === tab));
-  $("main").innerHTML = tab === "khach" ? `<iframe class="khach" src="/quan-tri/khach/" title="Đơn hàng và khách"></iframe>` : tab === "bai-viet" ? trangBaiViet() : trangSanPham();
+  $("main").innerHTML = tab === "khach" ? `<iframe class="khach" src="/quan-tri/khach/" title="Đơn hàng và khách"></iframe>` : tab === "bai-viet" ? trangBaiViet() : tab === "danh-muc" ? trangDanhMuc() : trangSanPham();
 }
 addEventListener("hashchange", () => { tim = ""; if ($("dlg").open) $("dlg").close(); ve(); });
 
@@ -244,16 +289,22 @@ document.addEventListener("input", (e) => {
   if (e.target.id === "tim") { tim = e.target.value; const pos = e.target.selectionStart; ve(); const t = $("tim"); t.focus(); t.setSelectionRange(pos, pos); }
 });
 document.addEventListener("click", async (e) => {
-  const t = e.target.closest("[data-sp],[data-bv],[data-moi],[data-dong],[data-xoa]");
+  const t = e.target.closest("[data-sp],[data-bv],[data-dm],[data-moi],[data-dong],[data-xoa]");
   if (!t) return;
   if (t.dataset.sp !== undefined) return suaSanPham(+t.dataset.sp);
   if (t.dataset.bv !== undefined) return suaBaiViet(+t.dataset.bv);
-  if (t.dataset.moi) return t.dataset.moi === "sp" ? suaSanPham("moi") : suaBaiViet("moi");
+  if (t.dataset.dm !== undefined) return suaDanhMuc(t.dataset.dm);
+  if (t.dataset.moi) return t.dataset.moi === "sp" ? suaSanPham("moi") : t.dataset.moi === "dm" ? suaDanhMuc("moi") : suaBaiViet("moi");
   if (t.dataset.dong !== undefined) return $("dlg").close();
   if (t.dataset.xoa !== undefined) {
-    const sp = dang.loai === "sp";
-    if (!confirm(sp ? "Xóa sản phẩm này khỏi trang web? (Có thể khôi phục lại sau)" : "Xóa bài viết này khỏi trang web? (Có thể khôi phục lại sau)")) return;
-    try { await gui(sp ? "/quan-tri/api/san-pham" : "/quan-tri/api/bai-viet", { id: dang.id, xoa: true }); xong("Đã xóa"); }
+    const sp = dang.loai === "sp", dm = dang.loai === "dm";
+    const hoi = sp ? "Xóa sản phẩm này khỏi trang web?" : dm ? "Xóa danh mục này khỏi menu? Các sản phẩm bên trong vẫn còn ở danh mục khác." : "Xóa bài viết này khỏi trang web?";
+    if (!confirm(hoi + " (Có thể khôi phục lại sau)")) return;
+    try {
+      if (dm) await gui("/quan-tri/api/danh-muc", { slug: dang.id, xoa: true, name: CATEGORIES[dang.id].name, intro: CATEGORIES[dang.id].intro, nhom: nhomCua(dang.id) });
+      else await gui(sp ? "/quan-tri/api/san-pham" : "/quan-tri/api/bai-viet", { id: dang.id, xoa: true });
+      xong("Đã xóa");
+    }
     catch (err) { $("edMsg").textContent = err.message; }
   }
 });
@@ -272,9 +323,10 @@ document.addEventListener("submit", async (e) => {
   e.preventDefault();
   const nut = $("edLuu"); $("edMsg").textContent = "";
   try {
-    const d = dang.loai === "sp" ? goiSanPham() : goiBaiViet();
+    const L = dang.loai;
+    const d = L === "sp" ? goiSanPham() : L === "dm" ? goiDanhMuc() : goiBaiViet();
     nut.disabled = true; nut.textContent = "Đang lưu…";
-    await gui(dang.loai === "sp" ? "/quan-tri/api/san-pham" : "/quan-tri/api/bai-viet", d);
+    await gui(L === "sp" ? "/quan-tri/api/san-pham" : L === "dm" ? "/quan-tri/api/danh-muc" : "/quan-tri/api/bai-viet", d);
     xong("Đã lưu – trang web đã cập nhật");
   } catch (err) { $("edMsg").textContent = err.message; nut.disabled = false; nut.textContent = "Lưu"; }
 });

@@ -127,6 +127,7 @@ def nd_doc():
         d = {}
     d.setdefault("sp", {})
     d.setdefault("bv", {})
+    d.setdefault("dm", {})
     return d
 
 
@@ -165,6 +166,13 @@ def nd_xuat_js(d=None):
     if (r.img) x.art = Object.assign({}, x.art, { img: r.img, alt: "" });
   });
   for (var j = 0; j < POSTS.length; j++) if (!POSTS[j]) POSTS[j] = { an: true, t: "", d: "", p: "", s: [], art: macDinh };
+  var N = {};
+  Object.keys(D.dm || {}).forEach(function (s) {
+    var r = D.dm[s];
+    CATEGORIES[s] = Object.assign({}, CATEGORIES[s] || {}, { name: r.name, intro: r.intro, an: !!r.an });
+    N[s] = r.nhom;
+  });
+  window.DM_NHOM = N;
   if (D.hot) window.HOT_IDS = D.hot;
 })();
 """ % du_lieu
@@ -288,7 +296,28 @@ def luu_anh(d):
     return 200, {"ok": True, "url": f"/anh-tai-len/{ten}"}
 
 
-QUAN_TRI_API = {"/quan-tri/api/san-pham": luu_san_pham, "/quan-tri/api/bai-viet": luu_bai_viet, "/quan-tri/api/anh": luu_anh}
+def luu_danh_muc(d):
+    nd = nd_doc()
+    slug = chu(d.get("slug"), 40)
+    if not SLUG.match(slug) or slug == "dich-vu":
+        return 400, {"ok": False, "loi": "Tên danh mục không hợp lệ."}
+    if d.get("moi") and slug in nd["dm"] and not nd["dm"][slug].get("an"):
+        return 400, {"ok": False, "loi": "Đã có danh mục trùng tên."}
+    r = nd["dm"].get(slug, {}) if not d.get("moi") else {}
+    if d.get("xoa"):
+        r.update({"an": True, "name": r.get("name") or e(d.get("name"), 80), "intro": r.get("intro") or e(d.get("intro"), 400),
+                  "nhom": r.get("nhom") or ("mua" if d.get("nhom") == "mua" else "loai")})
+    else:
+        ten = e(d.get("name"), 80)
+        if not ten:
+            return 400, {"ok": False, "loi": "Chưa nhập tên danh mục."}
+        r.update({"name": ten, "intro": e(d.get("intro"), 400), "nhom": "mua" if d.get("nhom") == "mua" else "loai", "an": False})
+    nd["dm"][slug] = r
+    nd_ghi(nd)
+    return 200, {"ok": True, "slug": slug}
+
+
+QUAN_TRI_API = {"/quan-tri/api/danh-muc": luu_danh_muc, "/quan-tri/api/san-pham": luu_san_pham, "/quan-tri/api/bai-viet": luu_bai_viet, "/quan-tri/api/anh": luu_anh}
 
 
 def trang_quan_tri():

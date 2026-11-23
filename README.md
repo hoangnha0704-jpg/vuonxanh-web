@@ -24,7 +24,7 @@ bash vuonxanh-web-main/cai-dat.sh tenmien.com
 - Cập nhật web không làm mất dữ liệu khách
 
 ## Trang quản trị nội dung (cho chủ cửa hàng)
-- `https://tenmien/quan-tri/`: tab **Sản phẩm** (sửa ảnh, tên, giá, mô tả, danh mục, còn/hết hàng, bán chạy, thêm/xóa), tab **Bài viết tin tức** (viết/sửa/xóa bài), tab **Đơn hàng & khách**
+- `https://tenmien/quan-tri/`: tab **Danh mục** (thêm/sửa/xóa danh mục, chọn hiện ở cột "Theo loại cây" hay "Cây mua nhiều"), tab **Sản phẩm** (sửa ảnh, tên, giá, mô tả, danh mục, còn/hết hàng, bán chạy, thêm/xóa), tab **Bài viết tin tức** (viết/sửa/xóa bài), tab **Đơn hàng & khách**
 - Bấm Lưu là web đổi ngay, không cần chạy lệnh. Dữ liệu sửa nằm ở `/var/lib/vuonxanh/noi-dung.json` (bản sao lưu: `noi-dung.json.bak`), ảnh tải lên ở `/var/lib/vuonxanh/anh-tai-len/`
 - Cập nhật mã nguồn (chạy lại `cai-dat.sh`) không làm mất nội dung đã sửa
 - Tài khoản: `vx-tai-khoan tenkhach` (tạo hoặc đổi mật khẩu), `vx-tai-khoan --ds` (danh sách), `vx-tai-khoan --xoa tenkhach` (xóa)
