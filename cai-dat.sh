@@ -126,8 +126,8 @@ server {
         alias /var/lib/vuonxanh/anh-tai-len/;
         expires 30d;
     }
-    # Sản phẩm / bài viết / danh mục mới thêm chưa có trang dựng sẵn: dùng trang chủ để tự hiển thị
-    location ~ ^/((san-pham|bai-viet)-[0-9]+|danh-muc-[a-z0-9-]+)/?$ {
+    # Sản phẩm / bài viết / dự án / danh mục mới thêm chưa có trang dựng sẵn: dùng trang chủ để tự hiển thị
+    location ~ ^/((san-pham|bai-viet|du-an)-[0-9]+|danh-muc-[a-z0-9-]+)/?$ {
         try_files \$uri/index.html /index.html;
         add_header Cache-Control "no-cache";
     }

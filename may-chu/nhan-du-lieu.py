@@ -128,6 +128,7 @@ def nd_doc():
     d.setdefault("sp", {})
     d.setdefault("bv", {})
     d.setdefault("dm", {})
+    d.setdefault("da", {})
     return d
 
 
@@ -165,6 +166,13 @@ def nd_xuat_js(d=None):
     ["t", "d", "p", "s", "an"].forEach(function (f) { if (r[f] !== undefined) x[f] = r[f]; });
     if (r.img) x.art = Object.assign({}, x.art, { img: r.img, alt: "" });
   });
+  Object.keys(D.da || {}).forEach(function (k) {
+    var i = +k, r = D.da[k];
+    var x = PROJECTS[i] || (PROJECTS[i] = { t: "", p: "", plants: "", art: macDinh });
+    ["t", "p", "plants", "loc", "s", "gal", "an", "them"].forEach(function (f) { if (r[f] !== undefined) x[f] = r[f]; });
+    if (r.img) x.art = Object.assign({}, x.art, { img: r.img, alt: "" });
+  });
+  for (var q = 0; q < PROJECTS.length; q++) if (!PROJECTS[q]) PROJECTS[q] = { an: true, t: "", p: "", plants: "", art: macDinh };
   for (var j = 0; j < POSTS.length; j++) if (!POSTS[j]) POSTS[j] = { an: true, t: "", d: "", p: "", s: [], art: macDinh };
   var N = {};
   Object.keys(D.dm || {}).forEach(function (s) {
@@ -296,6 +304,37 @@ def luu_anh(d):
     return 200, {"ok": True, "url": f"/anh-tai-len/{ten}"}
 
 
+def luu_du_an(d):
+    nd = nd_doc()
+    if d.get("id") == "moi":
+        i = max([so_id(d.get("base_len"), 5000) or 0] + [int(k) + 1 for k in nd["da"]])
+        r = {"them": int(time.time() * 1000)}
+    else:
+        i = so_id(d.get("id"), 5000)
+        if i is None:
+            return 400, {"ok": False, "loi": "Dự án không hợp lệ."}
+        r = nd["da"].get(str(i), {})
+    if d.get("xoa"):
+        r["an"] = True
+    else:
+        tieu_de = e(d.get("t"), 200)
+        if not tieu_de:
+            return 400, {"ok": False, "loi": "Chưa nhập tên dự án."}
+        muc = []
+        for m in (d.get("s") or [])[:30]:
+            if isinstance(m, list) and len(m) == 2 and (chu(m[0], 5) or chu(m[1], 5)):
+                muc.append([e(m[0], 200) or "Chi tiết", doan_van(m[1], 8000)])
+        gal = [u for u in (anh_hop_le(v) for v in (d.get("gal") or [])[:40]) if u]
+        r.update({"t": tieu_de, "p": e(d.get("p"), 600), "loc": e(d.get("loc"), 120), "plants": e(d.get("plants"), 300),
+                  "s": muc, "gal": gal, "an": False})
+        anh = anh_hop_le(d.get("img"))
+        if anh:
+            r["img"] = anh
+    nd["da"][str(i)] = r
+    nd_ghi(nd)
+    return 200, {"ok": True, "id": i}
+
+
 def luu_danh_muc(d):
     nd = nd_doc()
     slug = chu(d.get("slug"), 40)
@@ -317,7 +356,7 @@ def luu_danh_muc(d):
     return 200, {"ok": True, "slug": slug}
 
 
-QUAN_TRI_API = {"/quan-tri/api/danh-muc": luu_danh_muc, "/quan-tri/api/san-pham": luu_san_pham, "/quan-tri/api/bai-viet": luu_bai_viet, "/quan-tri/api/anh": luu_anh}
+QUAN_TRI_API = {"/quan-tri/api/du-an": luu_du_an, "/quan-tri/api/danh-muc": luu_danh_muc, "/quan-tri/api/san-pham": luu_san_pham, "/quan-tri/api/bai-viet": luu_bai_viet, "/quan-tri/api/anh": luu_anh}
 
 
 def trang_quan_tri():

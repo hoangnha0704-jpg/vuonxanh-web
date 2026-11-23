@@ -15,6 +15,7 @@ const pick = (i) => (live(i) ? PRODUCTS[i] : SHOWN().find((p) => p.art.img) || S
 const NEWEST = () => [...SHOWN()].sort((a, b) => (b.them || 0) - (a.them || 0)).slice(0, 4);
 const ngay = (d) => { const [dd, mm, yy] = String(d || "").split("/").map(Number); return new Date(yy || 0, (mm || 1) - 1, dd || 1).getTime(); };
 const POST_IDX = () => POSTS.map((x, i) => [x, i]).filter(([x]) => x && !x.an).sort((a, b) => ngay(b[0].d) - ngay(a[0].d));
+const DA_IDX = () => PROJECTS.map((x, i) => [x, i]).filter(([x]) => x && !x.an).sort((a, b) => (b[0].them || 0) - (a[0].them || 0) || a[1] - b[1]);
 const count = (s) => SHOWN().filter((p) => p.cats.includes(s)).length;
 const PHOTO = "#f1efe9";                                   // nền ảnh sản phẩm thống nhất
 const photo = (a, bg = PHOTO) => (a.img ? `<img class="art photo" src="${a.img}" alt="${esc(a.alt || "")}" loading="lazy" decoding="async" width="408" height="408">` : art({ ...a, bg }));
@@ -333,7 +334,7 @@ const PAGES = {
     <div class="tiles">
       <a href="#san-pham" class="tile"><span class="mini-img">${photo(pick(12).art)}</span><span><b>Bán cây cảnh</b><span>Nội thất, văn phòng, phong thủy</span></span></a>
       <a href="#dich-vu-cham-soc" class="tile"><span class="mini-img">${photo(pick(19).art)}</span><span><b>Chăm sóc định kỳ</b><span>Cho văn phòng, tòa nhà</span></span></a>
-      <a href="#du-an" class="tile"><span class="mini-img">${photo(PROJECTS[0].art)}</span><span><b>Thiết kế, thi công</b><span>Tiểu cảnh, sân vườn, vườn đứng</span></span></a>
+      <a href="#du-an" class="tile"><span class="mini-img">${photo((DA_IDX()[0] || [pick(0)])[0].art)}</span><span><b>Thiết kế, thi công</b><span>Tiểu cảnh, sân vườn, vườn đứng</span></span></a>
       <a href="#danh-muc-cong-trinh" class="tile"><span class="mini-img">${photo(pick(5).art)}</span><span><b>Cây công trình</b><span>Số lượng lớn cho dự án</span></span></a>
     </div>`) }),
 
@@ -341,7 +342,7 @@ const PAGES = {
     `<div class="container" style="padding-block:20px 56px"><div class="posts">${POST_IDX().map(([x, i]) => postCard(x, `#bai-viet-${i}`)).join("")}</div></div>` }),
 
   "du-an": () => ({ title: "Dự án", html: head("Công trình đã thi công", [], "Một số dự án cây xanh cho biệt thự, căn hộ, văn phòng và nhà hàng.") +
-    `<div class="container" style="padding-block:20px 56px"><div class="posts">${PROJECTS.map((x, i) => postCard({ ...x, d: "" }, `#du-an-${i}`)).join("")}</div></div>` }),
+    `<div class="container" style="padding-block:20px 56px"><div class="posts">${DA_IDX().map(([x, i]) => postCard({ ...x, d: x.loc || "" }, `#du-an-${i}`)).join("")}</div></div>` }),
 
   "cham-soc": () => ({ title: "Cách chăm sóc cây cảnh", html: head("Cách chăm sóc cây cảnh", [], "Chọn nhóm cây bạn đang trồng để xem hướng dẫn chi tiết.") + withSide(`
     <div class="tiles">${Object.entries(CARE).map(([k, c]) => `<a href="#${k}" class="tile"><span class="mini-img">${photo(c.art)}</span><span><b>${c.name.replace("Cách chăm sóc ", "Chăm ")}</b><span>${c.s.length} bước cơ bản</span></span></a>`).join("")}
@@ -469,14 +470,19 @@ function dynamicPage(route) {
       <div class="note-box">Cần tư vấn chọn cây? Gọi <b>${SHOP.hotline}</b> hoặc xem <a href="#danh-muc-trong-nha">cây cảnh trong nhà</a>.</div>`) +
       `<section class="section tight"><div class="container"><div class="sec-head"><h2 class="h2">Bài viết liên quan</h2></div><div class="posts">${POST_IDX().filter(([, k]) => k !== i).slice(0, 3).map(([p, k]) => postCard(p, `#bai-viet-${k}`)).join("")}</div></div></section>` };
   }
-  if ((m = route.match(/^du-an-(\d+)$/)) && PROJECTS[m[1]]) {
-    const x = PROJECTS[+m[1]];
-    return { title: x.t, desc: x.p, html: head(x.t, [["Dự án", "#du-an"]]) + withSide(`
-      <div class="lead-img">${photo(x.art, x.art.bg)}</div><p>${x.p.replace("…", ".")}</p>
+  if ((m = route.match(/^du-an-(\d+)$/)) && PROJECTS[m[1]] && !PROJECTS[m[1]].an) {
+    const i = +m[1], x = PROJECTS[i];
+    const noiDung = x.s && x.s.length ? sections(x.s) : `
       <h2>Yêu cầu</h2><p>Tạo mảng xanh hài hòa với kiến trúc sẵn có, cây dễ chăm và bền trong điều kiện thực tế.</p>
       <h2>Giải pháp</h2><p>Khảo sát ánh sáng và diện tích, lên phương án bố trí, chọn chậu đồng bộ, bàn giao kèm hướng dẫn chăm sóc.</p>
-      <h2>Cây sử dụng</h2><p>${x.plants}.</p><h2>Kết quả</h2><p>Không gian thoáng đãng hơn, khách hàng ký tiếp gói chăm sóc định kỳ.</p>
-      <p class="hint">Nội dung mẫu – thay bằng ảnh và mô tả dự án thật.</p>`) };
+      <h2>Kết quả</h2><p>Không gian thoáng đãng hơn, khách hàng ký tiếp gói chăm sóc định kỳ.</p>`;
+    const anh = (x.gal || []).map((u) => `<button class="gal-item" data-zoom="${u}" aria-label="Phóng to ảnh"><img src="${u}" alt="" loading="lazy"></button>`).join("");
+    return { title: x.t, desc: x.p, html: head(x.t, [["Dự án", "#du-an"]]) + withSide(`
+      ${x.loc ? `<p class="meta">📍 ${x.loc}</p>` : ""}<div class="lead-img">${photo(x.art, x.art.bg)}</div><p>${x.p.replace(/…$/, ".")}</p>
+      ${noiDung}${x.plants ? `<h2>Cây sử dụng</h2><p>${x.plants}.</p>` : ""}
+      ${anh ? `<h2>Hình ảnh công trình</h2><div class="gallery-grid">${anh}</div>` : ""}
+      <div class="note-box">Muốn làm công trình tương tự? Gọi <b>${SHOP.hotline}</b> hoặc <a href="#lien-he">gửi yêu cầu tư vấn</a>.</div>`) +
+      (DA_IDX().length > 1 ? `<section class="section tight"><div class="container"><div class="sec-head"><h2 class="h2">Dự án khác</h2></div><div class="posts">${DA_IDX().filter(([, k]) => k !== i).slice(0, 3).map(([p, k]) => postCard({ ...p, d: p.loc || "" }, `#du-an-${k}`)).join("")}</div></div></section>` : "") };
   }
   return null;
 }
@@ -529,6 +535,10 @@ document.addEventListener("click", (e) => {
     homeFilter = el.dataset.home;
     document.querySelectorAll("[data-home]").forEach((b) => b.classList.toggle("on", b === el));
     return ($("homeGrid").innerHTML = grid(homeHot()));
+  }
+  if ((el = q("[data-zoom]"))) {
+    const o = document.createElement("div"); o.className = "zoom"; o.innerHTML = `<img src="${el.dataset.zoom}" alt=""><button aria-label="Đóng">×</button>`;
+    o.addEventListener("click", () => o.remove()); document.body.appendChild(o); return;
   }
   if ((el = q("[data-step]"))) { const i = $("pdQty"); i.value = Math.min(99, Math.max(1, (+i.value || 1) + +el.dataset.step)); capNhatTamTinh(); return; }
   if ((el = q("[data-buy]"))) {
