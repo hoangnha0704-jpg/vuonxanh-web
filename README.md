@@ -17,3 +17,8 @@ bash vuonxanh-web-main/cai-dat.sh tenmien.com
 - `web/` – bản website đã dựng sẵn (95 trang, sitemap.xml, robots.txt)
 - `nguon/` – mã nguồn; sửa nội dung trong `nguon/data.js`, rồi chạy `node nguon/xay-dung.js` để dựng lại
 - `cai-dat.sh` – tự cài Nginx, đưa web lên và bật HTTPS
+
+## Đơn hàng, yêu cầu tư vấn, email đăng ký
+- `may-chu/nhan-du-lieu.py` – chương trình nhỏ chạy trên VPS (dịch vụ `vuonxanh-api`), lưu dữ liệu khách vào `/var/lib/vuonxanh/khach.db`
+- Xem dữ liệu: `https://tenmien/quan-tri/` (tên đăng nhập `admin`, mật khẩu xem bằng lệnh `cat /root/vuonxanh-quan-tri.txt` trên VPS)
+- Cập nhật web không làm mất dữ liệu khách

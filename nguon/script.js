@@ -396,8 +396,8 @@ const PAGES = {
         <label>Địa chỉ nhận hàng *<input id="oAddr" placeholder="Số nhà, đường, phường, quận"></label>
         <label>Ghi chú<textarea id="oNote" rows="3" placeholder="Ví dụ: giao giờ hành chính, gọi trước khi giao"></textarea></label>
         <h3 style="font-size:16px;margin-top:6px">Hình thức thanh toán</h3>
-        <label class="radio-card"><input type="radio" name="pay" checked> Thanh toán khi nhận hàng (COD)</label>
-        <label class="radio-card"><input type="radio" name="pay"> Chuyển khoản sau khi cửa hàng xác nhận</label>
+        <label class="radio-card"><input type="radio" name="pay" value="COD" checked> Thanh toán khi nhận hàng (COD)</label>
+        <label class="radio-card"><input type="radio" name="pay" value="Chuyển khoản"> Chuyển khoản sau khi cửa hàng xác nhận</label>
         <button class="btn btn-primary" type="submit">Đặt hàng · ${fmt(total())}</button>
         <p class="err-msg" id="oResult" role="status"></p>
       </form>
@@ -526,6 +526,11 @@ document.addEventListener("change", (e) => {
 });
 
 const isPhone = (v) => /^(0|\+84)[0-9 .]{8,12}$/.test(v.trim());
+// Gửi dữ liệu khách về máy chủ (chương trình may-chu/nhan-du-lieu.py trên VPS)
+const sendData = (url, data) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
+  .then((r) => r.json().catch(() => ({})).then((j) => { if (!r.ok || !j.ok) throw new Error(j.loi || "loi"); return j; }));
+const failText = () => `Chưa gửi được, vui lòng thử lại hoặc gọi ${SHOP.hotline}.`;
+const busy = (f, on) => { const b = f.querySelector("button[type=submit]"); if (b) { b.disabled = on; b.style.opacity = on ? 0.6 : ""; } };
 document.addEventListener("submit", (e) => {
   const f = e.target;
   if (f.id === "contactForm") {
@@ -534,7 +539,11 @@ document.addEventListener("submit", (e) => {
     if (!$("cName").value.trim() || !isPhone($("cPhone").value) || !$("cMsg").value.trim()) {
       m.className = "err-msg"; m.textContent = "Vui lòng nhập họ tên, số điện thoại (ví dụ 0912345678) và nội dung cần tư vấn."; return;
     }
-    m.className = "ok-msg"; m.textContent = "Đã nhận lời nhắn. (Bản mẫu: chưa kết nối máy chủ nên chưa gửi đi.)"; f.reset();
+    busy(f, true); m.className = "ok-msg"; m.textContent = "Đang gửi…";
+    sendData("/api/lien-he", { name: $("cName").value, phone: $("cPhone").value, email: $("cEmail").value, msg: $("cMsg").value })
+      .then(() => { m.className = "ok-msg"; m.textContent = "Đã nhận lời nhắn! Cửa hàng sẽ gọi lại cho bạn sớm."; f.reset(); })
+      .catch(() => { m.className = "err-msg"; m.textContent = failText(); })
+      .finally(() => busy(f, false));
   }
   if (f.id === "orderForm") {
     e.preventDefault();
@@ -542,14 +551,20 @@ document.addEventListener("submit", (e) => {
     if (!$("oName").value.trim() || !isPhone($("oPhone").value) || !$("oAddr").value.trim()) {
       m.textContent = "Vui lòng nhập họ tên, số điện thoại hợp lệ và địa chỉ nhận hàng."; return;
     }
-    const code = "VX" + Date.now().toString().slice(-6), sum = total(), name = $("oName").value.trim();
-    cart = {}; saveCart(); updateCart();
-    $("app").innerHTML = `<div class="container success"><div class="tick">✓</div><h1>Đặt hàng thành công</h1>
-      <p>Cảm ơn <b>${esc(name)}</b>! Mã đơn của bạn là <b>${code}</b>, tổng tiền <b>${fmt(sum)}</b>.</p>
-      <p>Cửa hàng sẽ gọi lại xác nhận trong ít phút.</p>
-      <p class="hint">Bản mẫu: đơn chưa được gửi tới máy chủ. Khi đưa lên VPS cần kết nối nơi nhận đơn.</p><br>
-      <a href="#trang-chu" class="btn btn-primary">Tiếp tục mua sắm</a></div>`;
-    scrollTo({ top: 0 });
+    const sum = total(), name = $("oName").value.trim();
+    const pay = (f.querySelector("input[name=pay]:checked") || {}).value || "";
+    busy(f, true); m.textContent = "";
+    sendData("/api/dat-hang", { name, phone: $("oPhone").value, addr: $("oAddr").value, note: $("oNote").value, pay,
+      items: items().map(({ p, q }) => ({ name: p.name, q, price: p.price * q })), total: sum })
+      .then((j) => {
+        cart = {}; saveCart(); updateCart();
+        $("app").innerHTML = `<div class="container success"><div class="tick">✓</div><h1>Đặt hàng thành công</h1>
+          <p>Cảm ơn <b>${esc(name)}</b>! Mã đơn của bạn là <b>${esc(j.ma_don || "")}</b>, tổng tiền <b>${fmt(sum)}</b>.</p>
+          <p>Cửa hàng sẽ gọi lại xác nhận trong ít phút.</p><br>
+          <a href="#trang-chu" class="btn btn-primary">Tiếp tục mua sắm</a></div>`;
+        scrollTo({ top: 0 });
+      })
+      .catch(() => { m.textContent = failText(); busy(f, false); });
   }
 });
 
@@ -564,7 +579,11 @@ $("newsForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const v = $("newsEmail").value.trim(), m = $("newsMsg");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) { m.textContent = "Email chưa đúng, ví dụ: ten@gmail.com"; m.classList.add("err"); return; }
-  m.classList.remove("err"); m.textContent = "Đã đăng ký! (Bản mẫu: chưa kết nối máy chủ gửi thư.)"; $("newsEmail").value = "";
+  const f = e.target; busy(f, true); m.classList.remove("err"); m.textContent = "Đang gửi…";
+  sendData("/api/dang-ky", { email: v })
+    .then(() => { m.textContent = "Đã đăng ký! Cảm ơn bạn."; $("newsEmail").value = ""; })
+    .catch(() => { m.classList.add("err"); m.textContent = failText(); })
+    .finally(() => busy(f, false));
 });
 
 $("toTop").onclick = () => scrollTo({ top: 0 });

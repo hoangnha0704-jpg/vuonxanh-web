@@ -32,11 +32,54 @@ if [ "$IPMODE" = 1 ]; then grep -rl "https://__DOMAIN__" "$SITE" | xargs -r sed 
 grep -rl "__DOMAIN__" "$SITE" | xargs -r sed -i "s/__DOMAIN__/$DOMAIN/g"
 chown -R www-data:www-data "$SITE"
 
+echo "==> Cài chương trình nhận đơn hàng, tư vấn, đăng ký email"
+# Dữ liệu khách nằm ở /var/lib/vuonxanh (không bị xóa khi cập nhật web)
+mkdir -p /opt/vuonxanh /var/lib/vuonxanh
+cp "$HERE/may-chu/nhan-du-lieu.py" /opt/vuonxanh/nhan-du-lieu.py
+chown -R www-data:www-data /var/lib/vuonxanh
+chmod 750 /var/lib/vuonxanh
+cat > /etc/systemd/system/vuonxanh-api.service <<UNIT
+[Unit]
+Description=Vuon Xanh - nhan du lieu khach
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/python3 /opt/vuonxanh/nhan-du-lieu.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/vuonxanh
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+systemctl daemon-reload
+systemctl enable vuonxanh-api >/dev/null 2>&1
+systemctl restart vuonxanh-api
+
+# Mật khẩu trang quản trị: tạo 1 lần, lần cập nhật sau giữ nguyên
+PASSFILE=/root/vuonxanh-quan-tri.txt
+if [ ! -f /etc/nginx/vuonxanh.htpasswd ] || [ ! -f "$PASSFILE" ]; then
+  ADMINPASS="$(tr -dc 'A-HJ-NP-Za-km-z2-9' </dev/urandom | head -c 12)"
+  printf 'admin:%s\n' "$(openssl passwd -apr1 "$ADMINPASS")" > /etc/nginx/vuonxanh.htpasswd
+  printf 'Trang quan tri: /quan-tri/\nTen dang nhap: admin\nMat khau: %s\n' "$ADMINPASS" > "$PASSFILE"
+  chmod 600 "$PASSFILE"
+fi
+chown root:www-data /etc/nginx/vuonxanh.htpasswd
+chmod 640 /etc/nginx/vuonxanh.htpasswd
+
 echo "==> 3/5 Cấu hình Nginx cho $DOMAIN"
 if [ "$IPMODE" = 1 ]; then SERVERNAME="_"; else SERVERNAME="$DOMAIN www.$DOMAIN"; fi
 # Chỉ nghe IPv6 nếu VPS có bật IPv6
 if [ -f /proc/net/if_inet6 ]; then LISTEN6="listen [::]:80;"; else LISTEN6=""; fi
 cat > /etc/nginx/sites-available/vuonxanh <<NGINX
+# Chống gửi ồ ạt: mỗi IP tối đa 10 lần gửi/phút
+limit_req_zone \$binary_remote_addr zone=vxapi:1m rate=10r/m;
+
 server {
     listen 80;
     $LISTEN6
@@ -48,6 +91,22 @@ server {
         try_files \$uri \$uri/ =404;
     }
     error_page 404 /404.html;
+
+    # Nhận đơn hàng, tư vấn, đăng ký email
+    location /api/ {
+        limit_req zone=vxapi burst=5 nodelay;
+        limit_req_status 429;
+        client_max_body_size 32k;
+        proxy_pass http://127.0.0.1:8090;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+    # Trang xem dữ liệu khách (có mật khẩu)
+    location /quan-tri/ {
+        auth_basic "Quan tri Vuon Xanh";
+        auth_basic_user_file /etc/nginx/vuonxanh.htpasswd;
+        proxy_pass http://127.0.0.1:8090;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
 
     gzip on;
     gzip_types text/css application/javascript image/svg+xml application/xml text/plain;
@@ -72,6 +131,7 @@ fi
 if [ "$IPMODE" = 1 ]; then
   echo ""
   echo "XONG! Mở trình duyệt vào:  http://$DOMAIN"
+  echo "Xem đơn hàng / khách đăng ký: http://$DOMAIN/quan-tri/"; cat "$PASSFILE"
   echo "Khi đã có tên miền trỏ về IP này, chạy:  bash cai-dat.sh tenmien.com"
   exit 0
 fi
@@ -80,6 +140,9 @@ if [ -n "$EMAIL" ]; then MAILOPT="--email $EMAIL"; else MAILOPT="--register-unsa
 if certbot --nginx -d "$DOMAIN" -d "www.$DOMAIN" --non-interactive --agree-tos $MAILOPT --redirect; then
   echo ""
   echo "XONG! Mở trình duyệt vào:  https://$DOMAIN"
+  echo ""
+  echo "Xem đơn hàng / khách đăng ký:  https://$DOMAIN/quan-tri/"
+  cat "$PASSFILE"
 else
   echo ""
   echo "Web đã chạy ở  http://$DOMAIN  nhưng CHƯA bật được HTTPS."
