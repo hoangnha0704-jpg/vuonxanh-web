@@ -1,7 +1,6 @@
 // =====================================================================
 //  DỮ LIỆU CỦA TOÀN BỘ WEBSITE
 //  Sửa chữ, giá, thêm sản phẩm/bài viết… đều làm trong file này.
-//  Phần ghi "(điền …)" là chỗ bạn thay bằng thông tin thật của cửa hàng.
 // =====================================================================
 
 const SHOP = {
@@ -10,7 +9,6 @@ const SHOP = {
   email: "hoangnha0704@gmail.com",
   address: "Thái Bình",
   hours: "8h sáng đến 20h tất cả các ngày trong tuần",
-  founded: "(điền năm thành lập)",
 };
 
 // ---------- DANH MỤC ----------

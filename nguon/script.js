@@ -67,9 +67,8 @@ $("megaMenu").innerHTML = `
     <div><b>${PRODUCTS[21].name}</b><span>${fmt(PRODUCTS[21].price)}</span></div></a>
     <p style="margin-top:12px"><a href="#san-pham" class="link-arrow">Xem tất cả ${PRODUCTS.length} sản phẩm</a></p></div>`;
 $("careMenu").innerHTML = Object.entries(CARE).map(([k, c]) => `<a href="#${k}">${c.name.replace("Cách chăm sóc ", "")}</a>`).join("") + `<a href="#dich-vu-cham-soc">Dịch vụ chăm sóc định kỳ</a>`;
-$("policyMenu").innerHTML = Object.entries(POLICIES).map(([k, v]) => `<a href="#${k}">${v.name}</a>`).join("");
 $("fCats").innerHTML = ["kim-tien", "van-phong", "de-ban", "phong-thuy", "loai-to", "sen-da"].map((s) => `<li><a href="${catHref(s)}">${catName(s)}</a></li>`).join("");
-$("fHelp").innerHTML = [["#huong-dan-mua-hang", "Hướng dẫn mua hàng"], ["#giao-hang", "Giao hàng"], ["#bao-hanh", "Bảo hành"], ["#doi-tra", "Đổi trả"], ["#cham-soc", "Cách chăm sóc cây"], ["#lien-he", "Liên hệ"]]
+$("fHelp").innerHTML = [["#huong-dan-mua-hang", "Hướng dẫn mua hàng"], ["#giao-hang", "Giao hàng"], ["#bao-hanh", "Bảo hành"], ["#doi-tra", "Đổi trả"], ["#cham-soc", "Cách chăm sóc cây"], ["#chinh-sach-chung", "Chính sách chung"], ["#gioi-thieu", "Giới thiệu"], ["#ban-do", "Bản đồ cửa hàng"], ["#lien-he", "Liên hệ"]]
   .map(([h, t]) => `<li><a href="${h}">${t}</a></li>`).join("");
 
 function closeMenu() { $("nav").classList.remove("open"); $("overlay").classList.remove("show"); }
@@ -106,7 +105,6 @@ const homeHot = () => (homeFilter === "all" ? HOT.map((i) => PRODUCTS[i]) : PROD
 
 function homePage() {
   const h = [PRODUCTS[21], PRODUCTS[12], PRODUCTS[9]];
-  const chips = ["kim-tien", "luoi-ho", "trau-ba", "bang-singapore", "de-ban", "sen-da", "thuy-sinh", "loai-to"];
   const room = (s, title, text, a) => `<a href="${catHref(s)}" class="room">${photo(a, a.bg)}<span class="room-text"><b>${title}</b><span>${text} · ${count(s)} mẫu</span></span></a>`;
   return `
   <section class="container hero">
@@ -116,6 +114,7 @@ function homePage() {
         <h1>Một chậu cây đẹp, cả không gian dễ chịu</h1>
         <p>Hơn ${PRODUCTS.length} mẫu cây được thuần tại vườn, giao tận nơi trong ngày, kèm hướng dẫn chăm sóc và bảo hành 14 ngày.</p>
         <div class="hero-btns"><a href="#san-pham" class="btn btn-primary">Xem tất cả cây</a><a href="#lien-he" class="btn btn-outline">Nhờ tư vấn chọn cây</a></div>
+        <div class="hero-quick"><span>Chọn nhanh:</span><a href="${catHref("de-ban")}">Để bàn</a><a href="${catHref("loai-to")}">Phòng khách</a><a href="${catHref("van-phong")}">Văn phòng</a></div>
         <div class="hero-stats"><div><b>14 ngày</b><span>bảo hành cây</span></div><div><b>2–4 giờ</b><span>giao nội thành</span></div><div><b>Trọn đời</b><span>hỗ trợ chăm cây</span></div></div>
       </div>
       <div class="hero-visual">
@@ -124,10 +123,15 @@ function homePage() {
     </div>
   </section>
 
+
   <section class="section tight">
     <div class="container">
-      <div class="sec-head"><div><p class="eyebrow">Danh mục</p><h2 class="h2">Bạn đang tìm cây gì?</h2></div><a href="#san-pham" class="link-arrow">Tất cả danh mục</a></div>
-      <div class="cat-row">${chips.map((s) => `<a href="${catHref(s)}" class="cat-chip"><span class="ring">${photo(firstOf(s).art)}</span>${catName(s).replace("Cây Cảnh ", "Cây ")}<small>${count(s)} mẫu</small></a>`).join("")}</div>
+      <div class="sec-head"><div><p class="eyebrow">Chọn theo không gian</p><h2 class="h2">Bạn muốn đặt cây ở đâu?</h2></div></div>
+      <div class="rooms">
+        ${room("loai-to", "Phòng khách", "Cây lớn tạo điểm nhấn", ANH(6))}
+        ${room("van-phong", "Văn phòng", "Hợp điều hòa, dễ chăm", ANH(26))}
+        ${room("de-ban", "Bàn làm việc", "Nhỏ gọn, xinh xắn", ANH(13))}
+      </div>
     </div>
   </section>
 
@@ -136,17 +140,6 @@ function homePage() {
       <div class="sec-head"><div><p class="eyebrow">Được chọn nhiều nhất</p><h2 class="h2">Cây bán chạy</h2></div>
         <div class="pills" role="tablist">${HOME_TABS.map(([k, t]) => `<button class="pill ${k === homeFilter ? "on" : ""}" data-home="${k}">${t}</button>`).join("")}</div></div>
       <div id="homeGrid">${grid(homeHot())}</div>
-    </div>
-  </section>
-
-  <section class="section tight">
-    <div class="container">
-      <div class="sec-head"><div><p class="eyebrow">Mua theo không gian</p><h2 class="h2">Đặt cây ở đâu cũng đẹp</h2></div></div>
-      <div class="rooms">
-        ${room("loai-to", "Phòng khách", "Cây lớn tạo điểm nhấn", ANH(6))}
-        ${room("van-phong", "Văn phòng", "Hợp điều hòa, dễ chăm", ANH(26))}
-        ${room("de-ban", "Bàn làm việc", "Nhỏ gọn, xinh xắn", ANH(13))}
-      </div>
     </div>
   </section>
 
@@ -164,14 +157,6 @@ function homePage() {
           <p>Gửi ảnh góc phòng qua Zalo, chúng tôi gợi ý loại cây hợp ánh sáng, diện tích và phong thủy trong 15 phút.</p></div>
         <div class="consult-actions"><span>Gọi hoặc nhắn Zalo</span><span class="phone">${SHOP.hotline}</span><a href="#lien-he" class="btn btn-light">Gửi yêu cầu tư vấn</a></div>
       </div>
-    </div>
-  </section>
-
-  <section class="section tight">
-    <div class="container">
-      <div class="sec-head"><div><p class="eyebrow">Khách hàng nói gì</p><h2 class="h2">Đánh giá từ khách hàng</h2></div></div>
-      <div class="reviews">${REVIEWS.slice(0, 3).map((r) => `<div class="review"><span class="stars">★★★★★</span><blockquote>“${r.q}”</blockquote>
-        <cite><span class="avatar">${r.name.split(" ")[2] || "K"}</span><span>${r.name}<br><span class="note">Nội dung mẫu – thay bằng đánh giá thật</span></span></cite></div>`).join("")}</div>
     </div>
   </section>
 
@@ -227,6 +212,37 @@ function refreshShop() {
 // ---------------------------------------------------------------------
 // TRANG SẢN PHẨM
 // ---------------------------------------------------------------------
+// ---- Cây giao kèm gì, chậu bán thêm ----
+const CHAU_SU = 34, CHAU_DEN = 35;
+function kemTheo(p) {
+  if (p.id === 36) return "bình thủy tinh, cây và rêu đã trồng sẵn như ảnh.";
+  if (p.cats.includes("phu-kien")) return "";
+  if (/^Chậu/.test(p.name)) return "chậu như ảnh, cây trồng sẵn và hướng dẫn chăm sóc.";
+  if (p.cats.includes("thuy-sinh")) return "cây đã làm sạch rễ, sẵn sàng thả bình, kèm hướng dẫn chăm sóc. Chưa gồm bình thủy tinh.";
+  return "cây trồng sẵn trong chậu nhựa ươm, đủ đất, kèm hướng dẫn chăm sóc. Chưa gồm chậu trang trí trong ảnh.";
+}
+const coChau = (p) => !!kemTheo(p) && !/^Chậu/.test(p.name) && !["thuy-sinh", "sen-da", "xuong-rong"].some((c) => p.cats.includes(c)) && p.id !== 36;
+const chauHop = (p) => (p.cats.includes("loai-to") || /1[0-9]{2}cm/.test(p.size) ? CHAU_DEN : CHAU_SU);
+function potBox(p) {
+  if (!coChau(p)) return "";
+  const goi = chauHop(p);
+  const opt = (id, ten, note, gia) => `<label class="pot-opt"><input type="radio" name="pot" value="${id}"${id === 0 ? " checked" : ""}>
+    ${id ? `<span class="pot-img">${photo(PRODUCTS[id].art)}</span>` : `<span class="pot-img none">—</span>`}
+    <span class="pot-txt"><b>${ten}</b><small>${note}${id === goi ? " · <em>Hợp cây này</em>" : ""}</small></span><span class="pot-price">${gia}</span></label>`;
+  return `<fieldset class="pot-box"><legend>Chọn chậu trang trí</legend>
+    ${opt(0, "Không cần chậu", "Giữ chậu nhựa ươm", "+0₫")}
+    ${opt(CHAU_SU, PRODUCTS[CHAU_SU].name, PRODUCTS[CHAU_SU].size, "+" + fmt(PRODUCTS[CHAU_SU].price))}
+    ${opt(CHAU_DEN, PRODUCTS[CHAU_DEN].name, PRODUCTS[CHAU_DEN].size, "+" + fmt(PRODUCTS[CHAU_DEN].price))}
+  </fieldset>`;
+}
+const potChon = () => +((document.querySelector("input[name=pot]:checked") || {}).value || 0);
+function capNhatTamTinh() {
+  const el = $("pdTotal"); if (!el) return;
+  const qn = Math.max(1, +$("pdQty").value || 1), pot = potChon();
+  const tong = (PRODUCTS[+el.dataset.id].price + (pot ? PRODUCTS[pot].price : 0)) * qn;
+  el.innerHTML = `Tạm tính: <b>${fmt(tong)}</b>${pot ? ` <small>(cây + ${PRODUCTS[pot].name.toLowerCase()})</small>` : ""}${qn > 1 ? ` <small>× ${qn}</small>` : ""}`;
+}
+
 function productPage(p) {
   const cat = p.cats[0], plant = cat !== "phu-kien";
   const views = p.art.img ? [PHOTO] : [PHOTO, "#e6eee2", "#efe8dc"];
@@ -235,7 +251,7 @@ function productPage(p) {
   <div class="container page-head"><nav class="crumbs"><a href="#trang-chu">Trang chủ</a><span>/</span><a href="#san-pham">Sản phẩm</a><span>/</span><a href="${catHref(cat)}">${catName(cat)}</a><span>/</span><span>${p.name}</span></nav></div>
   <div class="container pd">
     <div class="gallery">
-      <div class="thumbs">${views.map((bg, k) => `<button class="${k ? "" : "on"}" data-thumb="${k}" aria-label="Ảnh ${k + 1}">${photo(p.art, bg)}</button>`).join("")}</div>
+      ${views.length > 1 ? `<div class="thumbs">${views.map((bg, k) => `<button class="${k ? "" : "on"}" data-thumb="${k}" aria-label="Ảnh ${k + 1}">${photo(p.art, bg)}</button>`).join("")}</div>` : ""}
       <div class="main-img" id="mainImg">${photo(p.art)}</div>
     </div>
     <div>
@@ -243,12 +259,14 @@ function productPage(p) {
       <h1>${p.name}</h1>
       <div class="pd-sub"><span class="in-stock">● Còn hàng</span><span>Mã SP: ${p.msp}</span>${isHot(p) ? "<span>🔥 Bán chạy</span>" : ""}</div>
       <div class="pd-price">${fmt(p.price)}</div>
-      ${plant ? `<p class="pd-note">Giá chưa gồm chậu sứ hoặc bình thủy tinh</p>` : ""}
+      ${kemTheo(p) ? `<p class="pd-kem"><b>Giao kèm:</b> ${kemTheo(p)}</p>` : ""}
       <p class="pd-desc">${p.short}</p>
       <div class="specs">
         <div class="spec"><small>Kích thước</small><b>${p.size}</b></div>
         ${plant ? `<div class="spec"><small>Ánh sáng</small><b>${p.light}</b></div><div class="spec"><small>Độ khó</small><b>Dễ chăm</b></div>` : `<div class="spec"><small>Tình trạng</small><b>Mới 100%</b></div>`}
       </div>
+      ${potBox(p)}
+      <div class="pd-total" id="pdTotal" data-id="${p.id}">Tạm tính: <b>${fmt(p.price)}</b></div>
       <div class="buy-row">
         <div class="stepper"><button data-step="-1" aria-label="Giảm">−</button><input id="pdQty" type="number" min="1" max="99" value="1" aria-label="Số lượng"><button data-step="1" aria-label="Tăng">+</button></div>
         <button class="btn btn-primary" data-buy="${p.id}" data-mode="add">Thêm vào giỏ</button>
@@ -329,12 +347,7 @@ const PAGES = {
   "ban-do": () => ({ title: "Bản đồ", html: head("Bản đồ cửa hàng", [], "Ghé xem cây trực tiếp tại cửa hàng.") + `
     <div class="container two-col">
       <div class="map">
-        <svg viewBox="0 0 600 420" aria-hidden="true"><rect width="600" height="420" fill="#eef1e8"/>
-          <path d="M0 300 C120 270 220 330 340 290 S520 230 600 250" stroke="#bcd6e4" stroke-width="30" fill="none"/>
-          <path d="M0 110 H600 M0 210 H600 M180 0 V420 M420 0 V420" stroke="#fff" stroke-width="12"/>
-          <path d="M60 0 L260 420 M520 0 L360 420" stroke="#fff" stroke-width="6"/>
-          <rect x="30" y="30" width="120" height="55" rx="8" fill="#dfe8d6"/><rect x="450" y="130" width="120" height="55" rx="8" fill="#dfe8d6"/><rect x="210" y="130" width="180" height="55" rx="8" fill="#d4e3c9"/>
-          <g transform="translate(300 170)"><circle r="40" fill="#2f6b45" opacity=".15"/><path d="M0 0c-16-22-24-34-24-46a24 24 0 0 1 48 0c0 12-8 24-24 46z" fill="#2f6b45"/><circle cy="-46" r="9" fill="#fff"/></g></svg>
+        <iframe title="Bản đồ ${SHOP.name}" src="https://maps.google.com/maps?q=${encodeURIComponent(SHOP.address)}&z=13&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         <div class="map-card"><b>${SHOP.name}</b>${SHOP.address}</div>
       </div>
       <div class="panel"><ul class="info-list">
@@ -342,7 +355,7 @@ const PAGES = {
         <li><i>📞</i><span><small>Hotline</small>${SHOP.hotline}</span></li>
         <li><i>🕗</i><span><small>Giờ mở cửa</small>${SHOP.hours}</span></li></ul>
         <a class="btn btn-primary" style="margin-top:22px;width:100%" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SHOP.address)}" target="_blank" rel="noopener">Chỉ đường bằng Google Maps</a>
-        <p class="hint" style="margin-top:12px">Khi đưa lên VPS có thể thay khung bên trái bằng bản đồ Google Maps thật.</p></div>
+</div>
     </div>${moreProducts("Cây được quan tâm")}` }),
 
   "lien-he": () => ({ title: "Liên hệ", html: head("Liên hệ", [], "Hỏi gì về cây cũng được – chọn cây, chăm cây, báo giá số lượng lớn.") + `
@@ -503,8 +516,12 @@ document.addEventListener("click", (e) => {
     document.querySelectorAll("[data-home]").forEach((b) => b.classList.toggle("on", b === el));
     return ($("homeGrid").innerHTML = grid(homeHot()));
   }
-  if ((el = q("[data-step]"))) { const i = $("pdQty"); i.value = Math.min(99, Math.max(1, (+i.value || 1) + +el.dataset.step)); return; }
-  if ((el = q("[data-buy]"))) { addToCart(+el.dataset.buy, Math.max(1, +$("pdQty").value || 1)); if (el.dataset.mode === "now") location.hash = "mua-hang"; return; }
+  if ((el = q("[data-step]"))) { const i = $("pdQty"); i.value = Math.min(99, Math.max(1, (+i.value || 1) + +el.dataset.step)); capNhatTamTinh(); return; }
+  if ((el = q("[data-buy]"))) {
+    const qn = Math.max(1, +$("pdQty").value || 1), pot = potChon();
+    if (pot) cart[pot] = (cart[pot] || 0) + qn;   // thêm chậu cùng lúc với cây
+    addToCart(+el.dataset.buy, qn); if (el.dataset.mode === "now") location.hash = "mua-hang"; return;
+  }
   if ((el = q("[data-thumb]"))) { $("mainImg").innerHTML = el.innerHTML; document.querySelectorAll("[data-thumb]").forEach((b) => b.classList.toggle("on", b === el)); return; }
   if ((el = q("[data-tab]"))) {
     document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b === el));
@@ -524,6 +541,7 @@ document.addEventListener("change", (e) => {
   if (t.dataset.fprice) { t.checked ? shop.price.add(t.dataset.fprice) : shop.price.delete(t.dataset.fprice); refreshShop(); }
   if (t.dataset.flight) { t.checked ? shop.light.add(t.dataset.flight) : shop.light.delete(t.dataset.flight); refreshShop(); }
   if (t.id === "shopSort") { shop.sort = t.value; refreshShop(); }
+  if (t.name === "pot" || t.id === "pdQty") capNhatTamTinh();
 });
 
 const isPhone = (v) => /^(0|\+84)[0-9 .]{8,12}$/.test(v.trim());
