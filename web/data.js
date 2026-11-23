@@ -87,6 +87,9 @@ const PRODUCTS = [
 ];
 PRODUCTS.forEach((p, i) => { p.id = i; p.msp = 300 + i; p.stock = true; });
 
+// Cây bán chạy mặc định (số thứ tự sản phẩm). Trang quản trị có thể đổi danh sách này.
+const HOT_MAC_DINH = [12, 14, 21, 23, 6, 19, 25, 16, 1, 0, 20, 4];
+
 // Ảnh thật của sản phẩm: file nằm trong thư mục "anh", tên là sp-<số thứ tự>.webp
 // Thêm số vào danh sách này khi có ảnh mới; sản phẩm chưa có ảnh sẽ dùng hình vẽ minh họa.
 const ANH_SP = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36];

@@ -101,7 +101,7 @@ const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").
     .replace('<html lang="vi">', '<html lang="vi" data-pretty="1">')
     .replace(/<title>[\s\S]*?<\/title>/, `<title>Không tìm thấy trang – ${shop.name}</title><meta name="robots" content="noindex">`)
     .replace('href="style.css"', `href="/style.css?v=${ASSET_V["style.css"]}"`)
-    .replace(/<script src="([a-z]+\.js)"><\/script>/g, "")
+    .replace(/<script src="\/?([a-z-]+\.js)"><\/script>(<!--.*?-->)?/g, "")
     .replace('<main id="app"></main>', `<main id="app">${app404}</main>`)));
 
   const today = new Date().toISOString().slice(0, 10);

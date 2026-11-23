@@ -36,6 +36,35 @@ echo "==> Cài chương trình nhận đơn hàng, tư vấn, đăng ký email"
 # Dữ liệu khách nằm ở /var/lib/vuonxanh (không bị xóa khi cập nhật web)
 mkdir -p /opt/vuonxanh /var/lib/vuonxanh
 cp "$HERE/may-chu/nhan-du-lieu.py" /opt/vuonxanh/nhan-du-lieu.py
+cp "$HERE/may-chu/quan-tri.html" /opt/vuonxanh/quan-tri.html
+mkdir -p /var/lib/vuonxanh/anh-tai-len
+
+# Lệnh tạo / đổi mật khẩu / xóa tài khoản trang quản trị: vx-tai-khoan
+cat > /usr/local/bin/vx-tai-khoan <<'TK'
+#!/bin/bash
+# Cách dùng:
+#   vx-tai-khoan ten_dang_nhap        -> tạo tài khoản mới (hoặc đổi mật khẩu nếu đã có)
+#   vx-tai-khoan --xoa ten_dang_nhap  -> xóa tài khoản
+#   vx-tai-khoan --ds                 -> xem danh sách tài khoản
+F=/etc/nginx/vuonxanh.htpasswd
+touch "$F"
+if [ "$1" = "--ds" ]; then cut -d: -f1 "$F"; exit 0; fi
+if [ "$1" = "--xoa" ]; then
+  [ -n "$2" ] || { echo "Thiếu tên tài khoản"; exit 1; }
+  sed -i "/^$2:/d" "$F"; echo "Đã xóa tài khoản: $2"; exit 0
+fi
+U="$1"
+if ! [[ "$U" =~ ^[a-z0-9_.-]{3,30}$ ]]; then echo "Tên đăng nhập chỉ gồm chữ thường không dấu, số, dấu chấm/gạch (3–30 ký tự)."; exit 1; fi
+P="$(tr -dc 'A-HJ-NP-Za-km-z2-9' </dev/urandom | head -c 12)"
+sed -i "/^$U:/d" "$F"
+printf '%s:%s\n' "$U" "$(openssl passwd -apr1 "$P")" >> "$F"
+chown root:www-data "$F"; chmod 640 "$F"
+echo "Trang quản trị: https://$(cat /etc/vuonxanh-domain 2>/dev/null || echo tenmien)/quan-tri/"
+echo "Tên đăng nhập: $U"
+echo "Mật khẩu:      $P"
+TK
+chmod 755 /usr/local/bin/vx-tai-khoan
+echo "$DOMAIN" > /etc/vuonxanh-domain
 chown -R www-data:www-data /var/lib/vuonxanh
 chmod 750 /var/lib/vuonxanh
 cat > /etc/systemd/system/vuonxanh-api.service <<UNIT
@@ -87,6 +116,21 @@ server {
     root $SITE;
     index index.html;
 
+    # Nội dung sửa từ trang quản trị
+    location = /noi-dung.js {
+        alias /var/lib/vuonxanh/noi-dung.js;
+        default_type application/javascript;
+        add_header Cache-Control "no-cache";
+    }
+    location ^~ /anh-tai-len/ {
+        alias /var/lib/vuonxanh/anh-tai-len/;
+        expires 30d;
+    }
+    # Sản phẩm / bài viết mới thêm chưa có trang dựng sẵn: dùng trang chủ để tự hiển thị
+    location ~ ^/(san-pham|bai-viet)-[0-9]+/?$ {
+        try_files \$uri/index.html /index.html;
+        add_header Cache-Control "no-cache";
+    }
     location / {
         try_files \$uri \$uri/ =404;
         # Trang HTML: luôn hỏi lại máy chủ để khách thấy bản mới nhất
@@ -107,6 +151,7 @@ server {
     }
     # Trang xem dữ liệu khách (có mật khẩu)
     location /quan-tri/ {
+        client_max_body_size 10m;
         auth_basic "Quan tri Vuon Xanh";
         auth_basic_user_file /etc/nginx/vuonxanh.htpasswd;
         proxy_pass http://127.0.0.1:8090;

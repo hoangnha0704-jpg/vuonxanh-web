@@ -8,14 +8,21 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const catName = (s) => (s === "dich-vu" ? "Dịch vụ chăm sóc cây" : CATEGORIES[s].name);
 const catHref = (s) => (s === "dich-vu" ? "#dich-vu-cham-soc" : `#danh-muc-${s}`);
 const prodHref = (p) => `#san-pham-${p.id}`;
-const count = (s) => PRODUCTS.filter((p) => p.cats.includes(s)).length;
+// Sản phẩm/bài viết đang hiện (bỏ những cái đã xóa trong trang quản trị)
+const SHOWN = () => PRODUCTS.filter((p) => p && !p.an);
+const live = (i) => PRODUCTS[i] && !PRODUCTS[i].an;
+const pick = (i) => (live(i) ? PRODUCTS[i] : SHOWN().find((p) => p.art.img) || SHOWN()[0]);
+const NEWEST = () => [...SHOWN()].sort((a, b) => (b.them || 0) - (a.them || 0)).slice(0, 4);
+const ngay = (d) => { const [dd, mm, yy] = String(d || "").split("/").map(Number); return new Date(yy || 0, (mm || 1) - 1, dd || 1).getTime(); };
+const POST_IDX = () => POSTS.map((x, i) => [x, i]).filter(([x]) => x && !x.an).sort((a, b) => ngay(b[0].d) - ngay(a[0].d));
+const count = (s) => SHOWN().filter((p) => p.cats.includes(s)).length;
 const PHOTO = "#f1efe9";                                   // nền ảnh sản phẩm thống nhất
 const photo = (a, bg = PHOTO) => (a.img ? `<img class="art photo" src="${a.img}" alt="${esc(a.alt || "")}" loading="lazy" decoding="async" width="408" height="408">` : art({ ...a, bg }));
 
-// Cây bán chạy (số thứ tự trong PRODUCTS) – sửa tùy ý
-const HOT = [12, 14, 21, 23, 6, 19, 25, 16, 1, 0, 20, 4];
+// Cây bán chạy: danh sách mặc định nằm trong data.js (HOT_MAC_DINH), trang quản trị có thể đổi
+const HOT = (window.HOT_IDS || HOT_MAC_DINH).filter(live);
 const isHot = (p) => HOT.includes(p.id);
-const isNew = (p) => p.id < 8;
+const isNew = (p) => (p.them ? Date.now() - p.them < 45 * 864e5 : p.id < 8);
 
 // Điền thông tin cửa hàng
 document.querySelectorAll(".js-hotline").forEach((e) => (e.textContent = SHOP.hotline));
@@ -26,10 +33,10 @@ document.querySelectorAll(".js-email").forEach((e) => (e.textContent = SHOP.emai
 // MẪU DÙNG CHUNG
 // ---------------------------------------------------------------------
 function card(p) {
-  const badge = isHot(p) ? `<span class="badge hot">Bán chạy</span>` : isNew(p) ? `<span class="badge">Mới về</span>` : "";
+  const badge = p.stock === false ? `<span class="badge out">Tạm hết</span>` : isHot(p) ? `<span class="badge hot">Bán chạy</span>` : isNew(p) ? `<span class="badge">Mới về</span>` : "";
   return `<article class="card">
     <div class="card-img"><a href="${prodHref(p)}" class="card-link" aria-label="${p.name}">${photo(p.art)}</a>${badge}
-      <button class="quick-add" data-add="${p.id}" aria-label="Thêm ${p.name} vào giỏ">Thêm vào giỏ</button></div>
+      ${p.stock === false ? "" : `<button class="quick-add" data-add="${p.id}" aria-label="Thêm ${p.name} vào giỏ">Thêm vào giỏ</button>`}</div>
     <div class="card-body">
       <span class="card-cat">${CATEGORIES[p.cats[0]].name}</span>
       <a href="${prodHref(p)}" class="card-name">${p.name}</a>
@@ -59,13 +66,13 @@ const moreProducts = (title = "Có thể bạn thích", list = HOT.slice(0, 4).m
 // ---------------------------------------------------------------------
 const TYPE_CATS = ["phong-thuy", "trong-nha", "de-ban", "van-phong", "loai-to", "thuy-sinh", "day-leo", "xuong-rong", "sen-da", "cong-trinh", "phu-kien"];
 // Ưu tiên sản phẩm đã có ảnh thật để làm ảnh đại diện cho danh mục
-const firstOf = (s) => PRODUCTS.find((p) => p.cats.includes(s) && p.art.img) || PRODUCTS.find((p) => p.cats.includes(s));
+const firstOf = (s) => SHOWN().find((p) => p.cats.includes(s) && p.art.img) || SHOWN().find((p) => p.cats.includes(s)) || pick(0);
 $("megaMenu").innerHTML = `
   <div><h5>Theo loại cây</h5><div class="mega-links">${TYPE_CATS.map((s) => `<a href="${catHref(s)}"><span class="mini">${photo(firstOf(s).art)}</span>${catName(s)}</a>`).join("")}<a href="#dich-vu-cham-soc"><span class="mini">${photo(ANH(19))}</span>Dịch vụ chăm sóc cây</a></div></div>
   <div><h5>Cây mua nhiều</h5><div class="mega-links">${BEST_CATS.map((s) => `<a href="${catHref(s)}"><span class="mini">${photo(firstOf(s).art)}</span>${catName(s)}</a>`).join("")}</div></div>
-  <div><h5>Nổi bật tuần này</h5><a href="${prodHref(PRODUCTS[21])}" class="mega-feature"><span class="mf-img">${photo(PRODUCTS[21].art, "#e8efe3")}</span>
-    <div><b>${PRODUCTS[21].name}</b><span>${fmt(PRODUCTS[21].price)}</span></div></a>
-    <p style="margin-top:12px"><a href="#san-pham" class="link-arrow">Xem tất cả ${PRODUCTS.length} sản phẩm</a></p></div>`;
+  <div><h5>Nổi bật tuần này</h5><a href="${prodHref(pick(21))}" class="mega-feature"><span class="mf-img">${photo(pick(21).art, "#e8efe3")}</span>
+    <div><b>${pick(21).name}</b><span>${fmt(pick(21).price)}</span></div></a>
+    <p style="margin-top:12px"><a href="#san-pham" class="link-arrow">Xem tất cả ${SHOWN().length} sản phẩm</a></p></div>`;
 $("careMenu").innerHTML = Object.entries(CARE).map(([k, c]) => `<a href="#${k}">${c.name.replace("Cách chăm sóc ", "")}</a>`).join("") + `<a href="#dich-vu-cham-soc">Dịch vụ chăm sóc định kỳ</a>`;
 $("fCats").innerHTML = ["kim-tien", "van-phong", "de-ban", "phong-thuy", "loai-to", "sen-da"].map((s) => `<li><a href="${catHref(s)}">${catName(s)}</a></li>`).join("");
 $("fHelp").innerHTML = [["#huong-dan-mua-hang", "Hướng dẫn mua hàng"], ["#giao-hang", "Giao hàng"], ["#bao-hanh", "Bảo hành"], ["#doi-tra", "Đổi trả"], ["#cham-soc", "Cách chăm sóc cây"], ["#chinh-sach-chung", "Chính sách chung"], ["#gioi-thieu", "Giới thiệu"], ["#ban-do", "Bản đồ cửa hàng"], ["#lien-he", "Liên hệ"]]
@@ -81,7 +88,7 @@ $("overlay").onclick = closeMenu;
 let cart = {};
 try { cart = JSON.parse(localStorage.getItem("vx-cart") || "{}"); } catch (e) { cart = {}; }
 const saveCart = () => { try { localStorage.setItem("vx-cart", JSON.stringify(cart)); } catch (e) {} };
-const items = () => Object.entries(cart).filter(([id, q]) => PRODUCTS[id] && q > 0).map(([id, q]) => ({ p: PRODUCTS[id], q }));
+const items = () => Object.entries(cart).filter(([id, q]) => live(id) && q > 0).map(([id, q]) => ({ p: PRODUCTS[id], q }));
 const total = () => items().reduce((s, x) => s + x.p.price * x.q, 0);
 const qtyAll = () => items().reduce((s, x) => s + x.q, 0);
 function updateCart() { $("cartQty").textContent = qtyAll(); }
@@ -101,10 +108,10 @@ updateCart();
 // ---------------------------------------------------------------------
 let homeFilter = "all";
 const HOME_TABS = [["all", "Tất cả"], ["de-ban", "Để bàn"], ["van-phong", "Văn phòng"], ["phong-thuy", "Phong thủy"], ["loai-to", "Loại to"]];
-const homeHot = () => (homeFilter === "all" ? HOT.map((i) => PRODUCTS[i]) : PRODUCTS.filter((p) => p.cats.includes(homeFilter)).sort((a, b) => isHot(b) - isHot(a))).slice(0, 8);
+const homeHot = () => (homeFilter === "all" ? HOT.map((i) => PRODUCTS[i]) : SHOWN().filter((p) => p.cats.includes(homeFilter)).sort((a, b) => isHot(b) - isHot(a))).slice(0, 8);
 
 function homePage() {
-  const h = [PRODUCTS[21], PRODUCTS[12], PRODUCTS[9]];
+  const h = [pick(21), pick(12), pick(9)];
   const room = (s, title, text, a) => `<a href="${catHref(s)}" class="room">${photo(a, a.bg)}<span class="room-text"><b>${title}</b><span>${text} · ${count(s)} mẫu</span></span></a>`;
   return `
   <section class="container hero">
@@ -112,7 +119,7 @@ function homePage() {
       <div class="hero-text">
         <p class="eyebrow">Cây cảnh trong nhà & văn phòng</p>
         <h1>Một chậu cây đẹp, cả không gian dễ chịu</h1>
-        <p>Hơn ${PRODUCTS.length} mẫu cây được thuần tại vườn, giao tận nơi trong ngày, kèm hướng dẫn chăm sóc và bảo hành 14 ngày.</p>
+        <p>Hơn ${SHOWN().length} mẫu cây được thuần tại vườn, giao tận nơi trong ngày, kèm hướng dẫn chăm sóc và bảo hành 14 ngày.</p>
         <div class="hero-btns"><a href="#san-pham" class="btn btn-primary">Xem tất cả cây</a><a href="#lien-he" class="btn btn-outline">Nhờ tư vấn chọn cây</a></div>
         <div class="hero-quick"><span>Chọn nhanh:</span><a href="${catHref("de-ban")}">Để bàn</a><a href="${catHref("loai-to")}">Phòng khách</a><a href="${catHref("van-phong")}">Văn phòng</a></div>
         <div class="hero-stats"><div><b>14 ngày</b><span>bảo hành cây</span></div><div><b>2–4 giờ</b><span>giao nội thành</span></div><div><b>Trọn đời</b><span>hỗ trợ chăm cây</span></div></div>
@@ -146,7 +153,7 @@ function homePage() {
   <section class="section tight">
     <div class="container">
       <div class="sec-head"><div><p class="eyebrow">Vừa cập bến</p><h2 class="h2">Cây mới về</h2></div><a href="#san-pham" class="link-arrow">Xem thêm</a></div>
-      ${grid(PRODUCTS.slice(0, 4))}
+      ${grid(NEWEST())}
     </div>
   </section>
 
@@ -163,7 +170,7 @@ function homePage() {
   <section class="section tight" style="padding-bottom:64px">
     <div class="container">
       <div class="sec-head"><div><p class="eyebrow">Cẩm nang</p><h2 class="h2">Mẹo chăm cây</h2></div><a href="#tin-tuc" class="link-arrow">Tất cả bài viết</a></div>
-      <div class="posts">${POSTS.slice(0, 3).map((x, i) => postCard(x, `#bai-viet-${i}`)).join("")}</div>
+      <div class="posts">${POST_IDX().slice(0, 3).map(([x, i]) => postCard(x, `#bai-viet-${i}`)).join("")}</div>
     </div>
   </section>`;
 }
@@ -178,7 +185,7 @@ let shop = { cat: "", price: new Set(), light: new Set(), sort: "hot" };
 
 function shopList() {
   const sorters = { hot: (a, b) => isHot(b) - isHot(a) || a.id - b.id, new: (a, b) => a.id - b.id, asc: (a, b) => a.price - b.price, desc: (a, b) => b.price - a.price };
-  return PRODUCTS.filter((p) => (!shop.cat || p.cats.includes(shop.cat))
+  return SHOWN().filter((p) => (!shop.cat || p.cats.includes(shop.cat))
     && (!shop.price.size || PRICES.some(([k, , lo, hi]) => shop.price.has(k) && p.price >= lo && p.price < hi))
     && (!shop.light.size || shop.light.has(lightOf(p)))).sort(sorters[shop.sort]);
 }
@@ -190,7 +197,7 @@ function shopPage(cat) {
   <div class="container shop">
     <aside class="filters" id="filters">
       <div class="f-group"><h5>Danh mục</h5><div class="f-cats">
-        <a href="#san-pham" class="${cat ? "" : "on"}">Tất cả <em>${PRODUCTS.length}</em></a>
+        <a href="#san-pham" class="${cat ? "" : "on"}">Tất cả <em>${SHOWN().length}</em></a>
         ${TYPE_CATS.concat(BEST_CATS.filter((s) => !TYPE_CATS.includes(s))).map((s) => `<a href="${catHref(s)}" class="${s === cat ? "on" : ""}">${catName(s)} <em>${count(s)}</em></a>`).join("")}</div></div>
       <div class="f-group"><h5>Khoảng giá</h5>${PRICES.map(([k, t]) => `<label class="f-opt"><input type="checkbox" data-fprice="${k}"> ${t}</label>`).join("")}</div>
       <div class="f-group"><h5>Nơi đặt cây</h5>${LIGHTS.map(([k, t]) => `<label class="f-opt"><input type="checkbox" data-flight="${k}"> ${t}</label>`).join("")}</div>
@@ -221,7 +228,7 @@ function kemTheo(p) {
   if (p.cats.includes("thuy-sinh")) return "cây đã làm sạch rễ, sẵn sàng thả bình, kèm hướng dẫn chăm sóc. Chưa gồm bình thủy tinh.";
   return "cây trồng sẵn trong chậu nhựa ươm, đủ đất, kèm hướng dẫn chăm sóc. Chưa gồm chậu trang trí trong ảnh.";
 }
-const coChau = (p) => !!kemTheo(p) && !/^Chậu/.test(p.name) && !["thuy-sinh", "sen-da", "xuong-rong"].some((c) => p.cats.includes(c)) && p.id !== 36;
+const coChau = (p) => live(CHAU_SU) && live(CHAU_DEN) && !!kemTheo(p) && !/^Chậu/.test(p.name) && !["thuy-sinh", "sen-da", "xuong-rong"].some((c) => p.cats.includes(c)) && p.id !== 36;
 const chauHop = (p) => (p.cats.includes("loai-to") || /1[0-9]{2}cm/.test(p.size) ? CHAU_DEN : CHAU_SU);
 function potBox(p) {
   if (!coChau(p)) return "";
@@ -246,7 +253,7 @@ function capNhatTamTinh() {
 function productPage(p) {
   const cat = p.cats[0], plant = cat !== "phu-kien";
   const views = p.art.img ? [PHOTO] : [PHOTO, "#e6eee2", "#efe8dc"];
-  const related = PRODUCTS.filter((x) => x.id !== p.id && x.cats.some((k) => p.cats.includes(k))).slice(0, 4);
+  const related = SHOWN().filter((x) => x.id !== p.id && x.cats.some((k) => p.cats.includes(k))).slice(0, 4);
   return { title: p.name, desc: `${p.name} giá ${fmt(p.price)}. ${p.short}`, product: p, html: `
   <div class="container page-head"><nav class="crumbs"><a href="#trang-chu">Trang chủ</a><span>/</span><a href="#san-pham">Sản phẩm</a><span>/</span><a href="${catHref(cat)}">${catName(cat)}</a><span>/</span><span>${p.name}</span></nav></div>
   <div class="container pd">
@@ -257,7 +264,7 @@ function productPage(p) {
     <div>
       <a href="${catHref(cat)}" class="pd-cat">${catName(cat)}</a>
       <h1>${p.name}</h1>
-      <div class="pd-sub"><span class="in-stock">● Còn hàng</span><span>Mã SP: ${p.msp}</span>${isHot(p) ? "<span>🔥 Bán chạy</span>" : ""}</div>
+      <div class="pd-sub">${p.stock === false ? `<span class="out-stock">● Tạm hết hàng</span>` : `<span class="in-stock">● Còn hàng</span>`}<span>Mã SP: ${p.msp}</span>${isHot(p) ? "<span>🔥 Bán chạy</span>" : ""}</div>
       <div class="pd-price">${fmt(p.price)}</div>
       ${kemTheo(p) ? `<p class="pd-kem"><b>Giao kèm:</b> ${kemTheo(p)}</p>` : ""}
       <p class="pd-desc">${p.short}</p>
@@ -269,8 +276,8 @@ function productPage(p) {
       <div class="pd-total" id="pdTotal" data-id="${p.id}">Tạm tính: <b>${fmt(p.price)}</b></div>
       <div class="buy-row">
         <div class="stepper"><button data-step="-1" aria-label="Giảm">−</button><input id="pdQty" type="number" min="1" max="99" value="1" aria-label="Số lượng"><button data-step="1" aria-label="Tăng">+</button></div>
-        <button class="btn btn-primary" data-buy="${p.id}" data-mode="add">Thêm vào giỏ</button>
-        <button class="btn btn-outline" data-buy="${p.id}" data-mode="now">Mua ngay</button>
+        ${p.stock === false ? `<a class="btn btn-primary" href="#lien-he">Hỏi khi có hàng</a>` : `<button class="btn btn-primary" data-buy="${p.id}" data-mode="add">Thêm vào giỏ</button>
+        <button class="btn btn-outline" data-buy="${p.id}" data-mode="now">Mua ngay</button>`}
       </div>
       <ul class="assure">
         <li>Giao trong 2–4 giờ nội thành, đóng gói chống dập</li>
@@ -317,21 +324,21 @@ const PAGES = {
     <ul class="check"><li>Có vườn ươm riêng, cây được thuần trước khi giao.</li><li>Bảo hành sau khi mua, đổi cây nếu hỏng.</li><li>Tư vấn chọn cây theo ánh sáng, diện tích và phong thủy.</li><li>Hỗ trợ chăm sóc trọn đời qua Zalo.</li></ul>
     <h2>Chúng tôi làm những gì?</h2>
     <div class="tiles">
-      <a href="#san-pham" class="tile"><span class="mini-img">${photo(PRODUCTS[12].art)}</span><span><b>Bán cây cảnh</b><span>Nội thất, văn phòng, phong thủy</span></span></a>
-      <a href="#dich-vu-cham-soc" class="tile"><span class="mini-img">${photo(PRODUCTS[19].art)}</span><span><b>Chăm sóc định kỳ</b><span>Cho văn phòng, tòa nhà</span></span></a>
+      <a href="#san-pham" class="tile"><span class="mini-img">${photo(pick(12).art)}</span><span><b>Bán cây cảnh</b><span>Nội thất, văn phòng, phong thủy</span></span></a>
+      <a href="#dich-vu-cham-soc" class="tile"><span class="mini-img">${photo(pick(19).art)}</span><span><b>Chăm sóc định kỳ</b><span>Cho văn phòng, tòa nhà</span></span></a>
       <a href="#du-an" class="tile"><span class="mini-img">${photo(PROJECTS[0].art)}</span><span><b>Thiết kế, thi công</b><span>Tiểu cảnh, sân vườn, vườn đứng</span></span></a>
-      <a href="#danh-muc-cong-trinh" class="tile"><span class="mini-img">${photo(PRODUCTS[5].art)}</span><span><b>Cây công trình</b><span>Số lượng lớn cho dự án</span></span></a>
+      <a href="#danh-muc-cong-trinh" class="tile"><span class="mini-img">${photo(pick(5).art)}</span><span><b>Cây công trình</b><span>Số lượng lớn cho dự án</span></span></a>
     </div>`) }),
 
   "tin-tuc": () => ({ title: "Tin tức", html: head("Tin tức & mẹo chăm cây", [], "Kinh nghiệm chọn cây, chăm cây và bài viết phong thủy.") +
-    `<div class="container" style="padding-block:20px 56px"><div class="posts">${POSTS.map((x, i) => postCard(x, `#bai-viet-${i}`)).join("")}</div></div>` }),
+    `<div class="container" style="padding-block:20px 56px"><div class="posts">${POST_IDX().map(([x, i]) => postCard(x, `#bai-viet-${i}`)).join("")}</div></div>` }),
 
   "du-an": () => ({ title: "Dự án", html: head("Công trình đã thi công", [], "Một số dự án cây xanh cho biệt thự, căn hộ, văn phòng và nhà hàng.") +
     `<div class="container" style="padding-block:20px 56px"><div class="posts">${PROJECTS.map((x, i) => postCard({ ...x, d: "" }, `#du-an-${i}`)).join("")}</div></div>` }),
 
   "cham-soc": () => ({ title: "Cách chăm sóc cây cảnh", html: head("Cách chăm sóc cây cảnh", [], "Chọn nhóm cây bạn đang trồng để xem hướng dẫn chi tiết.") + withSide(`
     <div class="tiles">${Object.entries(CARE).map(([k, c]) => `<a href="#${k}" class="tile"><span class="mini-img">${photo(c.art)}</span><span><b>${c.name.replace("Cách chăm sóc ", "Chăm ")}</b><span>${c.s.length} bước cơ bản</span></span></a>`).join("")}
-      <a href="#dich-vu-cham-soc" class="tile"><span class="mini-img">${photo(PRODUCTS[21].art)}</span><span><b>Thuê chăm sóc định kỳ</b><span>Không có thời gian? Để chúng tôi lo</span></span></a></div>
+      <a href="#dich-vu-cham-soc" class="tile"><span class="mini-img">${photo(pick(21).art)}</span><span><b>Thuê chăm sóc định kỳ</b><span>Không có thời gian? Để chúng tôi lo</span></span></a></div>
     <h2>3 nguyên tắc chung</h2>
     <ul class="check"><li><b>Tưới khi đất khô</b>, không tưới theo thói quen mỗi ngày.</li><li><b>Đủ ánh sáng</b>: phần lớn cây trong nhà cần ánh sáng tán xạ.</li><li><b>Chậu thoát nước tốt</b> để rễ không bị úng.</li></ul>`) }),
 
@@ -423,7 +430,7 @@ const PAGES = {
   },
 
   "tim-kiem": () => {
-    const q = searchQuery.toLowerCase(), found = PRODUCTS.filter((p) => p.name.toLowerCase().includes(q));
+    const q = searchQuery.toLowerCase(), found = SHOWN().filter((p) => p.name.toLowerCase().includes(q));
     return { title: "Tìm kiếm", html: head(`Kết quả cho “${esc(searchQuery)}”`, [], `${found.length} sản phẩm`) +
       `<div class="container" style="padding-block:20px 56px">${found.length ? grid(found) : `<div class="empty"><b>Không tìm thấy cây phù hợp</b>Thử từ khóa khác như "kim", "trúc", "sen đá".</div>`}</div>` };
   },
@@ -446,14 +453,14 @@ Object.entries(POLICIES).forEach(([k, v]) => (PAGES[k] = () => ({ title: v.name,
 function dynamicPage(route) {
   let m;
   if ((m = route.match(/^danh-muc-(.+)$/)) && CATEGORIES[m[1]]) return shopPage(m[1]);
-  if ((m = route.match(/^san-pham-(\d+)$/)) && PRODUCTS[m[1]]) return productPage(PRODUCTS[m[1]]);
-  if ((m = route.match(/^bai-viet-(\d+)$/)) && POSTS[m[1]]) {
+  if ((m = route.match(/^san-pham-(\d+)$/)) && live(m[1])) return productPage(PRODUCTS[m[1]]);
+  if ((m = route.match(/^bai-viet-(\d+)$/)) && POSTS[m[1]] && !POSTS[m[1]].an) {
     const i = +m[1], x = POSTS[i];
     return { title: x.t, desc: x.p, html: head(x.t, [["Tin tức", "#tin-tuc"]]) + withSide(`
       <p class="meta">${x.d} · ${SHOP.name}</p><div class="lead-img">${photo(x.art, x.art.bg)}</div>
       <p><b>${x.p}</b></p><div class="toc"><b>Nội dung bài viết</b><ol>${x.s.map(([h]) => `<li>${h}</li>`).join("")}</ol></div>${sections(x.s)}
       <div class="note-box">Cần tư vấn chọn cây? Gọi <b>${SHOP.hotline}</b> hoặc xem <a href="#danh-muc-trong-nha">cây cảnh trong nhà</a>.</div>`) +
-      `<section class="section tight"><div class="container"><div class="sec-head"><h2 class="h2">Bài viết liên quan</h2></div><div class="posts">${POSTS.map((p, k) => [p, k]).filter(([, k]) => k !== i).slice(0, 3).map(([p, k]) => postCard(p, `#bai-viet-${k}`)).join("")}</div></div></section>` };
+      `<section class="section tight"><div class="container"><div class="sec-head"><h2 class="h2">Bài viết liên quan</h2></div><div class="posts">${POST_IDX().filter(([, k]) => k !== i).slice(0, 3).map(([p, k]) => postCard(p, `#bai-viet-${k}`)).join("")}</div></div></section>` };
   }
   if ((m = route.match(/^du-an-(\d+)$/)) && PROJECTS[m[1]]) {
     const x = PROJECTS[+m[1]];
