@@ -91,7 +91,7 @@ PRODUCTS.forEach((p, i) => { p.id = i; p.msp = 300 + i; p.stock = true; });
 
 // Ảnh thật của sản phẩm: file nằm trong thư mục "anh", tên là sp-<số thứ tự>.webp
 // Thêm số vào danh sách này khi có ảnh mới; sản phẩm chưa có ảnh sẽ dùng hình vẽ minh họa.
-const ANH_SP = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 36];
+const ANH_SP = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36];
 PRODUCTS.forEach((p) => { if (ANH_SP.includes(p.id)) p.art = { ...p.art, img: "/anh/sp-" + p.id + ".webp", alt: p.name }; });
 // Dùng ảnh của sản phẩm số i cho bài viết, dự án, trang chăm sóc… (alt để trống vì ảnh chỉ minh họa)
 const ANH = (i) => ({ ...PRODUCTS[i].art, alt: "" });
