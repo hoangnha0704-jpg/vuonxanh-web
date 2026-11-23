@@ -89,6 +89,11 @@ server {
 
     location / {
         try_files \$uri \$uri/ =404;
+        # Trang HTML: luôn hỏi lại máy chủ để khách thấy bản mới nhất
+        add_header Cache-Control "no-cache";
+    }
+    location /anh/ {
+        expires 1d;
     }
     error_page 404 /404.html;
 
@@ -110,8 +115,9 @@ server {
 
     gzip on;
     gzip_types text/css application/javascript image/svg+xml application/xml text/plain;
+    # CSS/JS có số phiên bản (?v=…) nên lưu lâu được; đổi nội dung là đổi số
     location ~* \.(css|js|svg)$ {
-        expires 7d;
+        expires 30d;
     }
 }
 NGINX

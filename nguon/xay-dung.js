@@ -11,6 +11,10 @@ const { chromium } = require("playwright");
 
 const SRC = __dirname;
 const OUT = path.join(SRC, "..", "web");
+// Gắn số phiên bản vào file giao diện (style.css?v=…) để mỗi lần cập nhật,
+// trình duyệt của khách tự tải bản mới thay vì dùng bản cũ đã lưu.
+const ver = (f) => require("crypto").createHash("md5").update(fs.readFileSync(path.join(SRC, f))).digest("hex").slice(0, 8);
+const ASSET_V = Object.fromEntries(["style.css", "art.js", "data.js", "script.js"].map((f) => [f, ver(f)]));
 const NOINDEX = ["mua-hang", "thanh-toan", "tim-kiem"];
 
 const prettyHref = (html) => html
@@ -78,8 +82,8 @@ const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").
     let html = template
       .replace('<html lang="vi">', '<html lang="vi" data-pretty="1">')
       .replace(/<title>[\s\S]*?<\/title>/, `<title>${escAttr(info.title)}</title>${headTags}`)
-      .replace('href="style.css"', 'href="/style.css"')
-      .replace(/<script src="([a-z]+\.js)"><\/script>/g, '<script src="/$1"></script>')
+      .replace('href="style.css"', `href="/style.css?v=${ASSET_V["style.css"]}"`)
+      .replace(/<script src="([a-z]+\.js)"><\/script>/g, (m, f) => `<script src="/${f}?v=${ASSET_V[f]}"></script>`)
       .replace('<main id="app"></main>', `<main id="app">${info.app}</main>`);
     html = prettyHref(html);
 
@@ -96,7 +100,7 @@ const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").
   fs.writeFileSync(path.join(OUT, "404.html"), prettyHref(template
     .replace('<html lang="vi">', '<html lang="vi" data-pretty="1">')
     .replace(/<title>[\s\S]*?<\/title>/, `<title>Không tìm thấy trang – ${shop.name}</title><meta name="robots" content="noindex">`)
-    .replace('href="style.css"', 'href="/style.css"')
+    .replace('href="style.css"', `href="/style.css?v=${ASSET_V["style.css"]}"`)
     .replace(/<script src="([a-z]+\.js)"><\/script>/g, "")
     .replace('<main id="app"></main>', `<main id="app">${app404}</main>`)));
 
