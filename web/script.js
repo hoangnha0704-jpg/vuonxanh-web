@@ -58,9 +58,10 @@ const moreProducts = (title = "Có thể bạn thích", list = HOT.slice(0, 4).m
 // MENU
 // ---------------------------------------------------------------------
 const TYPE_CATS = ["phong-thuy", "trong-nha", "de-ban", "van-phong", "loai-to", "thuy-sinh", "day-leo", "xuong-rong", "sen-da", "cong-trinh", "phu-kien"];
-const firstOf = (s) => PRODUCTS.find((p) => p.cats.includes(s));
+// Ưu tiên sản phẩm đã có ảnh thật để làm ảnh đại diện cho danh mục
+const firstOf = (s) => PRODUCTS.find((p) => p.cats.includes(s) && p.art.img) || PRODUCTS.find((p) => p.cats.includes(s));
 $("megaMenu").innerHTML = `
-  <div><h5>Theo loại cây</h5><div class="mega-links">${TYPE_CATS.map((s) => `<a href="${catHref(s)}"><span class="mini">${photo(firstOf(s).art)}</span>${catName(s)}</a>`).join("")}<a href="#dich-vu-cham-soc"><span class="mini">${photo(A("tree", "", "#fff", "#2e6e2a", "#4b8f3b"))}</span>Dịch vụ chăm sóc cây</a></div></div>
+  <div><h5>Theo loại cây</h5><div class="mega-links">${TYPE_CATS.map((s) => `<a href="${catHref(s)}"><span class="mini">${photo(firstOf(s).art)}</span>${catName(s)}</a>`).join("")}<a href="#dich-vu-cham-soc"><span class="mini">${photo(ANH(19))}</span>Dịch vụ chăm sóc cây</a></div></div>
   <div><h5>Cây mua nhiều</h5><div class="mega-links">${BEST_CATS.map((s) => `<a href="${catHref(s)}"><span class="mini">${photo(firstOf(s).art)}</span>${catName(s)}</a>`).join("")}</div></div>
   <div><h5>Nổi bật tuần này</h5><a href="${prodHref(PRODUCTS[21])}" class="mega-feature"><span class="mf-img">${photo(PRODUCTS[21].art, "#e8efe3")}</span>
     <div><b>${PRODUCTS[21].name}</b><span>${fmt(PRODUCTS[21].price)}</span></div></a>
@@ -142,9 +143,9 @@ function homePage() {
     <div class="container">
       <div class="sec-head"><div><p class="eyebrow">Mua theo không gian</p><h2 class="h2">Đặt cây ở đâu cũng đẹp</h2></div></div>
       <div class="rooms">
-        ${room("loai-to", "Phòng khách", "Cây lớn tạo điểm nhấn", A("tree", "#dfe9da", "#ffffff", "#2e6e2a", "#4b8f3b"))}
-        ${room("van-phong", "Văn phòng", "Hợp điều hòa, dễ chăm", A("tall", "#e6e2d6", "#2f2f2f", "#3e6e2f", "#c9c24a"))}
-        ${room("de-ban", "Bàn làm việc", "Nhỏ gọn, xinh xắn", A("rosette", "#e3ebe6", "", "#7fae6a", "#b4d39a", "#e08aa0"))}
+        ${room("loai-to", "Phòng khách", "Cây lớn tạo điểm nhấn", ANH(6))}
+        ${room("van-phong", "Văn phòng", "Hợp điều hòa, dễ chăm", ANH(26))}
+        ${room("de-ban", "Bàn làm việc", "Nhỏ gọn, xinh xắn", ANH(13))}
       </div>
     </div>
   </section>
@@ -291,7 +292,7 @@ const PAGES = {
   "san-pham": () => shopPage(""),
 
   "gioi-thieu": () => ({ title: "Giới thiệu", html: head("Giới thiệu", [], `${SHOP.name} – mang không gian xanh đến mọi nhà.`) + withSide(`
-    <div class="lead-img">${photo(A("tree", "#e3ebdd", "#ffffff", "#2e6e2a", "#4b8f3b"), "#e3ebdd")}</div>
+    <div class="lead-img">${photo(ANH(21), "#e3ebdd")}</div>
     <p>${SHOP.name} ra đời với mong muốn mang cây xanh vào từng căn nhà, văn phòng, đồng thời chia sẻ kinh nghiệm chăm sóc để cây sống khỏe lâu dài. Mua cây ở đây, bạn còn được hướng dẫn cách chăm và cách xử lý khi cây gặp vấn đề.</p>
     <p>Cây được bảo hành từ 7 đến 30 ngày tùy kích thước. Kể cả khi bạn mua cây ở nơi khác, chúng tôi vẫn sẵn sàng tư vấn miễn phí.</p>
     <h2>Vì sao chọn ${SHOP.name}?</h2>
