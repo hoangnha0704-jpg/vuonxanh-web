@@ -27,6 +27,10 @@ button { font: inherit; cursor: pointer; color: inherit; }
 ul { list-style: none; }
 img, svg { max-width: 100%; }
 svg.art { overflow: visible; }  /* nền ảnh tràn hết khung, cây luôn hiện trọn */
+/* Ảnh chụp sản phẩm: lấp đầy khung giống hình vẽ */
+img.photo { width: 100%; height: 100%; object-fit: cover; display: block; background: #f1efe9; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.card:hover .card-img img.photo, .hv:hover img.photo, .room:hover img.photo { transform: scale(1.05); }
+.room img.photo { position: absolute; inset: 0; }
 :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; border-radius: 4px; }
 
 .container {

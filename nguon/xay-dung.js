@@ -22,6 +22,7 @@ const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").
   fs.rmSync(OUT, { recursive: true, force: true });
   fs.mkdirSync(OUT, { recursive: true });
   for (const f of ["style.css", "art.js", "data.js", "script.js"]) fs.copyFileSync(path.join(SRC, f), path.join(OUT, f));
+  if (fs.existsSync(path.join(SRC, "anh"))) fs.cpSync(path.join(SRC, "anh"), path.join(OUT, "anh"), { recursive: true });
   fs.writeFileSync(path.join(OUT, "favicon.svg"),
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#2f6b45"/><path d="M20 31V17" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M20 21c-6 0-9-4-9-9 6 0 9 4 9 9zM20 18c0-5 3-8 9-8 0 5-3 8-9 8z" fill="#cfe5c4"/></svg>`);
 

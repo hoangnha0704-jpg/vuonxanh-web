@@ -10,7 +10,7 @@ const catHref = (s) => (s === "dich-vu" ? "#dich-vu-cham-soc" : `#danh-muc-${s}`
 const prodHref = (p) => `#san-pham-${p.id}`;
 const count = (s) => PRODUCTS.filter((p) => p.cats.includes(s)).length;
 const PHOTO = "#f1efe9";                                   // nền ảnh sản phẩm thống nhất
-const photo = (a, bg = PHOTO) => art({ ...a, bg });
+const photo = (a, bg = PHOTO) => (a.img ? `<img class="art photo" src="${a.img}" alt="${esc(a.alt || "")}" loading="lazy" decoding="async" width="408" height="408">` : art({ ...a, bg }));
 
 // Cây bán chạy (số thứ tự trong PRODUCTS) – sửa tùy ý
 const HOT = [12, 14, 21, 23, 6, 19, 25, 16, 1, 0, 20, 4];
@@ -228,7 +228,7 @@ function refreshShop() {
 // ---------------------------------------------------------------------
 function productPage(p) {
   const cat = p.cats[0], plant = cat !== "phu-kien";
-  const views = [PHOTO, "#e6eee2", "#efe8dc"];
+  const views = p.art.img ? [PHOTO] : [PHOTO, "#e6eee2", "#efe8dc"];
   const related = PRODUCTS.filter((x) => x.id !== p.id && x.cats.some((k) => p.cats.includes(k))).slice(0, 4);
   return { title: p.name, desc: `${p.name} giá ${fmt(p.price)}. ${p.short}`, product: p, html: `
   <div class="container page-head"><nav class="crumbs"><a href="#trang-chu">Trang chủ</a><span>/</span><a href="#san-pham">Sản phẩm</a><span>/</span><a href="${catHref(cat)}">${catName(cat)}</a><span>/</span><span>${p.name}</span></nav></div>
