@@ -182,6 +182,14 @@ server {
     }
     error_page 404 /404.html;
 
+    # Đánh giá của khách (có thể kèm 1 ảnh đã thu nhỏ)
+    location = /api/danh-gia {
+        limit_req zone=vxapi burst=3 nodelay;
+        limit_req_status 429;
+        client_max_body_size 3m;
+        proxy_pass http://127.0.0.1:8090;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
     # Nhận đơn hàng, tư vấn, đăng ký email
     location /api/ {
         limit_req zone=vxapi burst=5 nodelay;

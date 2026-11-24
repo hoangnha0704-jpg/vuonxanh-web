@@ -15,6 +15,13 @@ const un = (s) => { const t = document.createElement("textarea"); t.innerHTML = 
 const CAI = window.CAI_DAT || {};
 if (CAI.tet) document.documentElement.classList.add("tet");
 if (CAI.thong_bao) { const tb = document.querySelector(".announce-inner span"); if (tb) tb.textContent = un(CAI.thong_bao); }
+// Google Analytics 4 (mã G-… nhập trong quản trị, tab Giao diện)
+const ga = (ten, thamSo) => { if (window.gtag) window.gtag("event", ten, thamSo || {}); };
+if (CAI.ga && !/localhost|127\.0\.0\.1|^file/.test(location.href)) {
+  const sc = document.createElement("script"); sc.async = true; sc.src = "https://www.googletagmanager.com/gtag/js?id=" + CAI.ga; document.head.appendChild(sc);
+  window.dataLayer = window.dataLayer || []; window.gtag = function () { dataLayer.push(arguments); };
+  gtag("js", new Date()); gtag("config", CAI.ga, { send_page_view: false });
+}
 const catName = (s) => (s === "dich-vu" ? "Dịch vụ chăm sóc cây" : CATEGORIES[s].name);
 const catHref = (s) => (s === "dich-vu" ? "#dich-vu-cham-soc" : `#danh-muc-${s}`);
 const prodHref = (p) => `#san-pham-${p.id}`;
@@ -43,6 +50,10 @@ document.querySelectorAll(".js-email").forEach((e) => (e.textContent = SHOP.emai
 // ---------------------------------------------------------------------
 // MẪU DÙNG CHUNG
 // ---------------------------------------------------------------------
+// ---- Đánh giá của khách (đã duyệt trong trang quản trị) ----
+const dgCua = (id) => (window.DANH_GIA || {})[id] || [];
+const diemTB = (ds) => (ds.length ? ds.reduce((t, x) => t + x.s, 0) / ds.length : 0);
+const sao = (n, cls = "") => `<span class="sao ${cls}" aria-label="${n} trên 5 sao">${[1, 2, 3, 4, 5].map((k) => `<i class="${n >= k - 0.25 ? "day" : n >= k - 0.75 ? "nua" : ""}">★</i>`).join("")}</span>`;
 function card(p) {
   const badge = p.stock === false ? `<span class="badge out">Tạm hết</span>` : isHot(p) ? `<span class="badge hot">Bán chạy</span>` : isNew(p) ? `<span class="badge">Mới về</span>` : "";
   return `<article class="card">
@@ -52,6 +63,7 @@ function card(p) {
       <span class="card-cat">${CATEGORIES[p.cats[0]].name}</span>
       <a href="${prodHref(p)}" class="card-name">${p.name}</a>
       <span class="card-meta">${cap(p.size)}${p.light ? " · " + cap(p.light) : ""}</span>
+      ${dgCua(p.id).length ? `<span class="card-rate">${sao(diemTB(dgCua(p.id)))} <b>${diemTB(dgCua(p.id)).toFixed(1)}</b> (${dgCua(p.id).length})</span>` : ""}
       <span class="card-price">${fmt(p.price)}</span>
     </div>
   </article>`;
@@ -115,6 +127,7 @@ const qtyAll = () => items().reduce((s, x) => s + x.q, 0);
 function updateCart() { $("cartQty").textContent = qtyAll(); }
 function addToCart(id, q = 1) {
   cart[id] = (cart[id] || 0) + q; saveCart(); updateCart();
+  ga("add_to_cart", { currency: "VND", value: PRODUCTS[id].price * q, items: [{ item_id: String(PRODUCTS[id].msp), item_name: PRODUCTS[id].name, price: PRODUCTS[id].price, quantity: q }] });
   const c = $("cartBtn"); c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump");
   toast(`Đã thêm <b>${PRODUCTS[id].name}</b> vào giỏ`, `<a href="#mua-hang">Xem giỏ →</a>`);
 }
@@ -142,7 +155,7 @@ function homePage() {
         <h1>Một chậu cây đẹp, cả không gian dễ chịu</h1>
         <p>Hơn ${SHOWN().length} mẫu cây được thuần tại vườn, giao tận nơi trong ngày, kèm hướng dẫn chăm sóc và bảo hành 14 ngày.</p>
         <div class="hero-btns"><a href="#san-pham" class="btn btn-primary">Xem tất cả cây</a><a href="#lien-he" class="btn btn-outline">Nhờ tư vấn chọn cây</a></div>
-        <div class="hero-quick"><span>Chọn nhanh:</span><a href="${catHref("de-ban")}">Để bàn</a><a href="${catHref("loai-to")}">Phòng khách</a><a href="${catHref("van-phong")}">Văn phòng</a></div>
+        <div class="hero-quick"><a href="#chon-cay" class="quiz-link">🌱 Chọn cây giúp tôi</a><span>Chọn nhanh:</span><a href="${catHref("de-ban")}">Để bàn</a><a href="${catHref("loai-to")}">Phòng khách</a><a href="${catHref("van-phong")}">Văn phòng</a></div>
         <div class="hero-stats"><div><b>14 ngày</b><span>bảo hành cây</span></div><div><b>2–4 giờ</b><span>giao nội thành</span></div><div><b>Trọn đời</b><span>hỗ trợ chăm cây</span></div></div>
       </div>
       <div class="hero-visual">
@@ -177,6 +190,7 @@ function homePage() {
       ${grid(NEWEST())}
     </div>
   </section>
+  ${khachNoi()}
 
   <section class="section tight">
     <div class="container">
@@ -271,15 +285,27 @@ function capNhatTamTinh() {
   el.innerHTML = `Tạm tính: <b>${fmt(tong)}</b>${pot ? ` <small>(cây + ${PRODUCTS[pot].name.toLowerCase()})</small>` : ""}${qn > 1 ? ` <small>× ${qn}</small>` : ""}`;
 }
 
+// Dòng giao hàng: đặt trước giờ chốt (cài trong quản trị, mặc định 15h) thì giao trong ngày
+function giaoHang() {
+  const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()).split(":").map(Number);
+  const now = h * 60 + m, chot = (CAI.gio_chot || 15) * 60;
+  if (now < 8 * 60) return `🚚 Đặt ngay – <b>giao trong hôm nay</b> (nội thành, từ 8h sáng)`;
+  if (now < chot) { const con = chot - now; return `🚚 Đặt trong <b>${con >= 60 ? Math.floor(con / 60) + " giờ " : ""}${con % 60} phút</b> nữa để nhận cây <b>hôm nay</b> (nội thành)`; }
+  return `🚚 Đặt bây giờ – <b>giao sáng mai</b> (nội thành). Đơn trước ${CAI.gio_chot || 15}h giao trong ngày`;
+}
+// Thông tin chăm sóc của 1 cây: giá trị sửa trong quản trị, thiếu thì lấy mặc định theo loại cây
+const chamCua = (p) => { const m = CHAM_MAC_DINH(p); return { kho: p.kho || m.kho, tuoi: p.tuoi || m.tuoi, thuCung: p.thuCung || m.thuCung, caoMax: p.caoMax || m.caoMax }; };
 function productPage(p) {
-  const cat = p.cats[0], plant = cat !== "phu-kien";
-  const views = p.art.img ? [PHOTO] : [PHOTO, "#e6eee2", "#efe8dc"];
+  const cat = p.cats[0], plant = cat !== "phu-kien" || p.id === 36, ch = chamCua(p);
+  // Bộ ảnh: ảnh chính + ảnh thêm (tải trong quản trị). Sản phẩm chưa có ảnh thật dùng hình vẽ 3 nền.
+  const anh = p.art.img ? [p.art.img, ...(p.gal || [])] : null;
+  const views = anh ? anh.map((u) => ({ ...p.art, img: u })) : [PHOTO, "#e6eee2", "#efe8dc"].map((bg) => ({ ...p.art, bg }));
   const related = SHOWN().filter((x) => x.id !== p.id && x.cats.some((k) => p.cats.includes(k))).slice(0, 4);
   return { title: p.name, seoTitle: p.seoTitle, desc: p.seoDesc || `${p.name} giá ${fmt(p.price)}. ${p.short}`, image: p.art.img, product: p, html: `
   <div class="container page-head"><nav class="crumbs"><a href="#trang-chu">Trang chủ</a><span>/</span><a href="#san-pham">Sản phẩm</a><span>/</span><a href="${catHref(cat)}">${catName(cat)}</a><span>/</span><span>${p.name}</span></nav></div>
   <div class="container pd">
     <div class="gallery">
-      ${views.length > 1 ? `<div class="thumbs">${views.map((bg, k) => `<button class="${k ? "" : "on"}" data-thumb="${k}" aria-label="Ảnh ${k + 1}">${photo(p.art, bg)}</button>`).join("")}</div>` : ""}
+      ${views.length > 1 ? `<div class="thumbs">${views.map((a, k) => `<button class="${k ? "" : "on"}" data-thumb="${k}" aria-label="Ảnh ${k + 1}">${photo(a, a.bg)}</button>`).join("")}</div>` : ""}
       <div class="main-img" id="mainImg">${photo(p.art)}</div>
     </div>
     <div>
@@ -287,11 +313,17 @@ function productPage(p) {
       <h1>${p.name}</h1>
       <div class="pd-sub">${p.stock === false ? `<span class="out-stock">● Tạm hết hàng</span>` : `<span class="in-stock">● Còn hàng</span>`}<span>Mã SP: ${p.msp}</span>${isHot(p) ? "<span>🔥 Bán chạy</span>" : ""}</div>
       <div class="pd-price">${fmt(p.price)}</div>
+      ${dgCua(p.id).length ? `<button type="button" class="pd-rate" data-cuon="danhGia">${sao(diemTB(dgCua(p.id)))} <b>${diemTB(dgCua(p.id)).toFixed(1)}</b> · ${dgCua(p.id).length} đánh giá</button>` : ""}
+      ${p.stock === false ? "" : `<p class="pd-giao">${giaoHang()}</p>`}
       ${kemTheo(p) ? `<p class="pd-kem"><b>Giao kèm:</b> ${kemTheo(p)}</p>` : ""}
       <p class="pd-desc">${p.short}</p>
       <div class="specs">
-        <div class="spec"><small>Kích thước</small><b>${cap(p.size)}</b></div>
-        ${plant ? `<div class="spec"><small>Ánh sáng</small><b>${cap(p.light)}</b></div><div class="spec"><small>Độ khó</small><b>Dễ chăm</b></div>` : `<div class="spec"><small>Tình trạng</small><b>Mới 100%</b></div>`}
+        <div class="spec"><small>${plant ? "Kích thước lúc giao" : "Kích thước"}</small><b>${cap(p.size)}</b></div>
+        ${plant ? `${ch.caoMax ? `<div class="spec"><small>Khi trưởng thành</small><b>${cap(ch.caoMax)}</b></div>` : ""}
+        <div class="spec"><small>Ánh sáng</small><b>${cap(p.light)}</b></div>
+        <div class="spec"><small>Tưới nước</small><b>${cap(ch.tuoi)}</b></div>
+        <div class="spec" title="${KHO_CHU[ch.kho][1]}"><small>Độ khó</small><b class="kho-${ch.kho}">${KHO_CHU[ch.kho][0]}</b><em>${KHO_CHU[ch.kho][1]}</em></div>
+        <div class="spec" title="${THU_CUNG_CHU[ch.thuCung][1]}"><small>Thú cưng</small><b class="tc-${ch.thuCung}">${THU_CUNG_CHU[ch.thuCung][0]}</b><em>${THU_CUNG_CHU[ch.thuCung][1]}</em></div>` : `<div class="spec"><small>Tình trạng</small><b>Mới 100%</b></div>`}
       </div>
       ${potBox(p)}
       <div class="pd-total" id="pdTotal" data-id="${p.id}">Tạm tính: <b>${fmt(p.price)}</b></div>
@@ -316,17 +348,68 @@ function productPage(p) {
       <h2>Giá bán</h2><p>${p.name} có giá <b>${fmt(p.price)}</b>. Mua số lượng lớn hoặc cho công trình, vui lòng gọi ${SHOP.hotline} để có giá tốt hơn.</p>
     </div>
     <div class="tab-panel prose" data-panel="1" hidden>
-      ${plant ? `<ul class="check"><li><b>Tưới nước:</b> khi mặt đất khô 2–3cm, thường 1–2 lần/tuần.</li><li><b>Ánh sáng:</b> ${p.light}.</li><li><b>Bón phân:</b> phân tan chậm 1–2 tháng một lần.</li><li><b>Cắt tỉa:</b> bỏ lá vàng, cành yếu để cây thông thoáng.</li></ul>
+      ${plant ? `<ul class="check"><li><b>Tưới nước:</b> ${ch.tuoi} – tưới khi mặt đất khô 2–3cm, không để úng.</li><li><b>Ánh sáng:</b> ${p.light}.</li><li><b>Bón phân:</b> phân tan chậm 1–2 tháng một lần.</li><li><b>Cắt tỉa:</b> bỏ lá vàng, cành yếu để cây thông thoáng.</li></ul>
       <p>Xem thêm hướng dẫn chi tiết tại <a href="#cham-soc">Cách chăm sóc cây cảnh</a>.</p>` : `<p>Vệ sinh bằng khăn ẩm, tránh va đập mạnh.</p>`}
     </div>
     <div class="tab-panel" data-panel="2" hidden>${faq(plant ? [
       [`${p.name} có để trong nhà được không?`, `Được, nếu đặt nơi có ${p.light}.`],
       ["Vì sao lá bị vàng?", "Thường do tưới quá nhiều hoặc thiếu sáng. Giảm tưới và mang cây ra chỗ sáng hơn."],
-      ["Cây có độc không?", "Không gây hại khi tiếp xúc thông thường. Không nên để trẻ nhỏ, thú cưng nhai lá."],
+      ["Cây có an toàn với chó mèo không?", `${THU_CUNG_CHU[ch.thuCung][1]}. Không nên để trẻ nhỏ nhai lá cây cảnh.`],
       ["Mua về có được bảo hành không?", "Có, bảo hành 14 ngày theo chính sách bảo hành."]] : [
       ["Có được đổi trả không?", "Có, trong 3 ngày nếu lỗi do vận chuyển."], ["Có giao tận nơi không?", "Có, giao nội thành trong ngày."]])}</div>
   </div>
+  ${khungDanhGia(p)}
   ${moreProducts("Sản phẩm tương tự", related)}` };
+}
+function khachNoi() {
+  const ds = Object.entries(window.DANH_GIA || {}).filter(([id]) => live(id)).flatMap(([id, l]) => l.map((x) => ({ ...x, p: PRODUCTS[id] })))
+    .filter((x) => x.s >= 4).sort((a, b) => (b.d > a.d ? 1 : -1)).slice(0, 3);
+  if (!ds.length) return "";
+  return `<section class="section tight"><div class="container"><div class="sec-head"><div><p class="eyebrow">Khách hàng nói gì</p><h2 class="h2">Đánh giá thật từ người đã mua</h2></div></div>
+    <div class="dg-home">${ds.map((x) => `<article class="dg-item">${sao(x.s)}<p>${x.n}</p>
+      <div class="dg-h"><span class="dg-av">${x.t.trim().charAt(0).toUpperCase()}</span><div><b>${x.t}</b><small>Đã mua <a href="${prodHref(x.p)}">${x.p.name}</a></small></div></div></article>`).join("")}</div></div></section>`;
+}
+function khungDanhGia(p) {
+  const ds = dgCua(p.id), tb = diemTB(ds);
+  const phan = [5, 4, 3, 2, 1].map((k) => [k, ds.filter((x) => x.s === k).length]);
+  return `<section class="section tight" id="danhGia"><div class="container"><div class="dg-wrap">
+    <div class="dg-tong">
+      <h2 class="h2">Đánh giá của khách</h2>
+      ${ds.length ? `<div class="dg-diem"><b>${tb.toFixed(1)}</b>${sao(tb, "lon")}<span>${ds.length} đánh giá</span></div>
+        <div class="dg-phan">${phan.map(([k, n]) => `<div><span>${k}★</span><i><em style="width:${(n / ds.length) * 100}%"></em></i><span>${n}</span></div>`).join("")}</div>`
+        : `<p class="dg-trong">Chưa có đánh giá nào. Bạn đã mua ${p.name}? Hãy là người đầu tiên chia sẻ!</p>`}
+      <button class="btn btn-outline" data-viet-dg>Viết đánh giá</button>
+    </div>
+    <div class="dg-ds">
+      <form class="dg-form" id="dgForm" data-sp="${p.id}" hidden>
+        <b>Đánh giá ${p.name}</b>
+        <div class="dg-chon" role="radiogroup" aria-label="Số sao">${[5, 4, 3, 2, 1].map((k) => `<input type="radio" name="sao" id="sao${k}" value="${k}"${k === 5 ? " checked" : ""}><label for="sao${k}" title="${k} sao">★</label>`).join("")}</div>
+        <input id="dgTen" maxlength="60" placeholder="Tên của bạn *" required>
+        <textarea id="dgND" rows="4" maxlength="1500" placeholder="Cây nhận được thế nào? Đóng gói, giao hàng, tư vấn ra sao? *" required></textarea>
+        <label class="dg-anh">📷 Thêm ảnh cây thực tế (không bắt buộc)<input type="file" id="dgAnh" accept="image/*"></label>
+        <input type="text" id="dgWeb" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+        <div class="dg-nut"><button class="btn btn-primary" type="submit">Gửi đánh giá</button><span class="form-msg" id="dgMsg"></span></div>
+      </form>
+      ${ds.map((x) => `<article class="dg-item">
+        <div class="dg-h"><span class="dg-av">${x.t.trim().charAt(0).toUpperCase()}</span><div><b>${x.t}</b><small>${x.d.split("-").reverse().join("/")} · Đã mua hàng</small></div>${sao(x.s)}</div>
+        <p>${x.n}</p>${x.a ? `<button class="dg-img" data-zoom="${x.a}" aria-label="Phóng to ảnh"><img src="${x.a}" alt="Ảnh khách chụp ${p.name}" loading="lazy"></button>` : ""}
+        ${x.p ? `<div class="dg-ph"><b>${SHOP.name} phản hồi:</b> ${x.p}</div>` : ""}
+      </article>`).join("")}
+    </div></div></div></section>`;
+}
+// Thu nhỏ ảnh khách chọn (tối đa 1200px) trước khi gửi
+function thuNhoAnh(file) {
+  return new Promise((ok, loi) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, 1200 / Math.max(img.width, img.height)), c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); ok(c.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => loi(new Error("Không đọc được ảnh"));
+    img.src = url;
+  });
 }
 
 // ---------------------------------------------------------------------
@@ -335,7 +418,38 @@ function productPage(p) {
 // Ảnh lớn đầu bài: ảnh vuông/dọc hiện trọn ảnh trên nền chính ảnh đó làm mờ, không bị cắt
 const leadImg = (a, bg) => (a.img ? `<div class="lead-img fit"><img class="blur" src="${a.img}" alt="" aria-hidden="true"><img class="main" src="${a.img}" alt="${esc(a.alt || "")}" loading="lazy"></div>` : `<div class="lead-img">${photo(a, bg)}</div>`);
 const withSide = (inner) => `<div class="container content-wrap"><div class="prose">${inner}</div>${sideCard()}</div>`;
+// ---- Bộ câu hỏi chọn cây: gợi ý theo vị trí, ánh sáng, thời gian chăm, thú cưng ----
+const QUIZ = [
+  ["vi_tri", "Bạn định đặt cây ở đâu?", [["ban", "🖥️", "Bàn làm việc, kệ"], ["san", "🛋️", "Sàn phòng khách, góc nhà"], ["vp", "🏢", "Văn phòng, sảnh công ty"], ["ngoai", "☀️", "Ban công, sân, cổng"]]],
+  ["anh_sang", "Chỗ đó có nhiều ánh sáng không?", [["it", "🌥️", "Ít sáng, chủ yếu đèn, máy lạnh"], ["vua", "⛅", "Sáng gián tiếp, gần cửa sổ"], ["nang", "☀️", "Có nắng chiếu trực tiếp"]]],
+  ["thoi_gian", "Bạn có hay chăm cây không?", [["quen", "😅", "Hay quên tưới, bận rộn"], ["vua", "🙂", "Tưới đều mỗi tuần"], ["thich", "🌿", "Thích chăm, không ngại công"]]],
+  ["thu_cung", "Nhà có chó mèo hoặc trẻ nhỏ hay nghịch lá không?", [["co", "🐱", "Có"], ["khong", "🚫", "Không"]]],
+];
+function goiYCay(tl) {
+  return SHOWN().filter((p) => !p.cats.includes("phu-kien") && p.stock !== false).map((p) => {
+    const ch = chamCua(p), L = (p.light || "").toLowerCase(), ly = [];
+    let d = 0;
+    const viTri = { ban: ["de-ban", "sen-da", "xuong-rong", "thuy-sinh"], san: ["loai-to", "trong-nha"], vp: ["van-phong"], ngoai: ["cong-trinh", "day-leo"] }[tl.vi_tri] || [];
+    if (p.cats.some((c) => viTri.includes(c))) { d += 4; ly.push({ ban: "Hợp đặt bàn", san: "Hợp đặt sàn", vp: "Hợp văn phòng", ngoai: "Trồng ngoài trời tốt" }[tl.vi_tri]); }
+    const nangManh = /trực tiếp|mạnh/.test(L), chiuBong = /bóng|tán xạ/.test(L);
+    if (tl.anh_sang === "it") { if (/bóng/.test(L)) { d += 3; ly.push("Chịu bóng rất tốt"); } else if (chiuBong) { d += 2; ly.push("Sống được nơi ít sáng"); } else if (nangManh) d -= 3; }
+    if (tl.anh_sang === "vua") { if (chiuBong || /nhẹ|không gắt/.test(L)) { d += 2; ly.push("Hợp ánh sáng gần cửa sổ"); } }
+    if (tl.anh_sang === "nang") { if (nangManh || /nắng/.test(L)) { d += 3; ly.push("Ưa nắng"); } else if (chiuBong) d -= 1; }
+    if (tl.thoi_gian === "quen") { if (ch.kho === "de") { d += 2; ly.push("Rất dễ chăm, chịu được quên tưới"); } else d -= 2; }
+    if (tl.thoi_gian === "vua" && ch.kho !== "kho") d += 1;
+    if (tl.thoi_gian === "thich" && ch.kho !== "de") { d += 1; ly.push("Đẹp hơn khi được chăm kỹ"); }
+    if (tl.thu_cung === "co") { if (ch.thuCung === "an_toan") { d += 2; ly.push("An toàn với chó mèo"); } else if (ch.thuCung === "can_than" || ch.thuCung === "gai") d -= 6; }
+    if (isHot(p)) d += 0.5;
+    if (dgCua(p.id).length) d += Math.min(1, diemTB(dgCua(p.id)) / 5);
+    return { p, d, ly };
+  }).filter((x) => x.d > 0).sort((a, b) => b.d - a.d).slice(0, 4);
+}
 const PAGES = {
+  "chon-cay": () => ({ title: "Chọn cây giúp tôi", desc: `Trả lời 4 câu hỏi nhanh, ${SHOP.name} gợi ý cây cảnh hợp với vị trí, ánh sáng, thời gian chăm và nhà có thú cưng của bạn.`,
+    html: head("Chọn cây giúp tôi", [], "Trả lời 4 câu hỏi – mất chưa tới 30 giây – để xem cây nào hợp với bạn nhất.") + `
+    <div class="container quiz"><form id="quizForm">${QUIZ.map(([k, h, ds], i) => `<fieldset class="quiz-q"><legend><span>${i + 1}</span>${h}</legend><div class="quiz-opts">${ds.map(([v, ic, t]) =>
+      `<label><input type="radio" name="${k}" value="${v}"><span><i>${ic}</i>${t}</span></label>`).join("")}</div></fieldset>`).join("")}
+    </form><div id="quizKQ" class="quiz-kq"></div></div>` }),
   "trang-chu": () => ({ title: "", html: homePage() }),
   "san-pham": () => shopPage(""),
 
@@ -441,7 +555,7 @@ const PAGES = {
         <label>Ghi chú<textarea id="oNote" rows="3" placeholder="Ví dụ: giao giờ hành chính, gọi trước khi giao"></textarea></label>
         <h3 style="font-size:16px;margin-top:6px">Hình thức thanh toán</h3>
         <label class="radio-card"><input type="radio" name="pay" value="COD" checked> Thanh toán khi nhận hàng (COD)</label>
-        <label class="radio-card"><input type="radio" name="pay" value="Chuyển khoản"> Chuyển khoản sau khi cửa hàng xác nhận</label>
+        <label class="radio-card"><input type="radio" name="pay" value="Chuyển khoản"> ${CAI.bank && CAI.stk ? "Chuyển khoản – quét mã QR ngân hàng (hiện ngay sau khi đặt)" : "Chuyển khoản sau khi cửa hàng xác nhận"}</label>
         <button class="btn btn-primary" type="submit">Đặt hàng · ${fmt(total())}</button>
         <p class="err-msg" id="oResult" role="status"></p>
       </form>
@@ -459,7 +573,7 @@ const PAGES = {
   },
 
   "so-do-trang": () => ({ title: "Sơ đồ trang", html: head("Sơ đồ trang") + `<div class="container sitemap">
-    <div><h3>Trang chính</h3><a href="#trang-chu">Trang chủ</a><a href="#san-pham">Tất cả sản phẩm</a><a href="#gioi-thieu">Giới thiệu</a><a href="#tin-tuc">Tin tức</a><a href="#du-an">Dự án</a><a href="#ban-do">Bản đồ</a><a href="#lien-he">Liên hệ</a><a href="#mua-hang">Giỏ hàng</a></div>
+    <div><h3>Trang chính</h3><a href="#trang-chu">Trang chủ</a><a href="#san-pham">Tất cả sản phẩm</a><a href="#chon-cay">Chọn cây giúp tôi</a><a href="#gioi-thieu">Giới thiệu</a><a href="#tin-tuc">Tin tức</a><a href="#du-an">Dự án</a><a href="#ban-do">Bản đồ</a><a href="#lien-he">Liên hệ</a><a href="#mua-hang">Giỏ hàng</a></div>
     <div><h3>Danh mục</h3>${Object.keys(CATEGORIES).filter(dmHien).map((s) => `<a href="${catHref(s)}">${catName(s)}</a>`).join("")}</div>
     <div><h3>Chăm sóc</h3><a href="#cham-soc">Tổng quan</a>${Object.entries(CARE).map(([k, c]) => `<a href="#${k}">${c.name}</a>`).join("")}<a href="#dich-vu-cham-soc">Dịch vụ chăm sóc</a>
       <h3 style="margin-top:20px">Chính sách</h3>${Object.entries(POLICIES).map(([k, v]) => `<a href="#${k}">${v.name}</a>`).join("")}</div></div>` }),
@@ -551,6 +665,9 @@ function render() {
   if (PRETTY) prettyLinks(document);
   document.title = page.seoTitle ? un(page.seoTitle) : page.title ? un(`${page.title} – ${SHOP.name}`) : `${SHOP.name} – Cây cảnh trong nhà & văn phòng`;
   scrollTo({ top: 0 });
+  ga("page_view", { page_title: document.title, page_location: location.href });
+  if (page.product) ga("view_item", { currency: "VND", value: page.product.price, items: [{ item_id: String(page.product.msp), item_name: page.product.name, price: page.product.price }] });
+  if (route === "thanh-toan") ga("begin_checkout", { currency: "VND", value: total() });
 }
 addEventListener("hashchange", render);
 render();
@@ -567,6 +684,8 @@ document.addEventListener("click", (e) => {
     document.querySelectorAll("[data-home]").forEach((b) => b.classList.toggle("on", b === el));
     return ($("homeGrid").innerHTML = grid(homeHot()));
   }
+  if ((el = q("[data-cuon]"))) { e.preventDefault(); $(el.dataset.cuon).scrollIntoView({ behavior: "smooth" }); return; }
+  if ((el = q("[data-viet-dg]"))) { const f = $("dgForm"); f.hidden = !f.hidden; if (!f.hidden) $("dgTen").focus(); return; }
   if ((el = q("[data-zoom]"))) {
     const o = document.createElement("div"); o.className = "zoom"; o.innerHTML = `<img src="${el.dataset.zoom}" alt=""><button aria-label="Đóng">×</button>`;
     o.addEventListener("click", () => o.remove()); document.body.appendChild(o); return;
@@ -605,6 +724,35 @@ const sendData = (url, data) => fetch(url, { method: "POST", headers: { "Content
   .then((r) => r.json().catch(() => ({})).then((j) => { if (!r.ok || !j.ok) throw new Error(j.loi || "loi"); return j; }));
 const failText = () => `Chưa gửi được, vui lòng thử lại hoặc gọi ${SHOP.hotline}.`;
 const busy = (f, on) => { const b = f.querySelector("button[type=submit]"); if (b) { b.disabled = on; b.style.opacity = on ? 0.6 : ""; } };
+// Bộ câu hỏi chọn cây: trả lời đủ là hiện gợi ý ngay
+document.addEventListener("change", (e) => {
+  const f = e.target.closest && e.target.closest("#quizForm");
+  if (!f) return;
+  const tl = Object.fromEntries(new FormData(f));
+  const q = e.target.closest(".quiz-q"), sau = q && q.nextElementSibling;
+  if (sau && sau.classList.contains("quiz-q") && !sau.querySelector("input:checked")) setTimeout(() => sau.scrollIntoView({ behavior: "smooth", block: "center" }), 150);
+  if (Object.keys(tl).length < QUIZ.length) return;
+  const kq = goiYCay(tl);
+  $("quizKQ").innerHTML = kq.length ? `<h2 class="h2">Gợi ý cho bạn</h2><div class="grid quiz-grid">${kq.map(({ p, ly }) => `<div class="quiz-card">${card(p)}<ul class="quiz-ly">${ly.slice(0, 3).map((x) => `<li>✓ ${x}</li>`).join("")}</ul></div>`).join("")}</div>
+    <p class="quiz-them">Chưa ưng ý? <a href="#lien-he">Nhờ cửa hàng tư vấn</a> hoặc gọi <b>${SHOP.hotline}</b> – miễn phí.</p>`
+    : `<p>Chưa tìm được cây thật hợp – <a href="#lien-he">gửi yêu cầu tư vấn</a>, cửa hàng sẽ gọi lại gợi ý cho bạn.</p>`;
+  if (PRETTY) prettyLinks($("quizKQ"));
+  setTimeout(() => $("quizKQ").scrollIntoView({ behavior: "smooth" }), 150);
+  ga("quiz_xong", { vi_tri: tl.vi_tri, anh_sang: tl.anh_sang });
+});
+// Khách gửi đánh giá
+document.addEventListener("submit", async (e) => {
+  if (e.target.id !== "dgForm") return;
+  e.preventDefault();
+  const f = e.target, m = $("dgMsg"), nut = f.querySelector("button[type=submit]");
+  nut.disabled = true; m.className = "form-msg"; m.textContent = "Đang gửi…";
+  try {
+    const file = $("dgAnh").files[0];
+    await sendData("/api/danh-gia", { sp_id: +f.dataset.sp, sao: +(f.querySelector("input[name=sao]:checked") || {}).value, ten: $("dgTen").value,
+      noi_dung: $("dgND").value, anh: file ? await thuNhoAnh(file) : "", website: $("dgWeb").value });
+    f.innerHTML = `<p class="dg-camon">🌿 Cảm ơn bạn đã đánh giá! Đánh giá sẽ hiện sau khi cửa hàng kiểm tra.</p>`;
+  } catch (err) { m.className = "form-msg err-msg"; m.textContent = err.message && err.message !== "loi" ? err.message : failText(); nut.disabled = false; }
+});
 document.addEventListener("submit", (e) => {
   const f = e.target;
   if (f.id === "contactForm") {
@@ -634,9 +782,15 @@ document.addEventListener("submit", (e) => {
         cart = {}; saveCart(); updateCart();
         $("app").innerHTML = `<div class="container success"><div class="tick">✓</div><h1>Đặt hàng thành công</h1>
           <p>Cảm ơn <b>${esc(name)}</b>! Mã đơn của bạn là <b>${esc(j.ma_don || "")}</b>, tổng tiền <b>${fmt(sum)}</b>.</p>
-          <p>Cửa hàng sẽ gọi lại xác nhận trong ít phút.</p><br>
+          <p>Cửa hàng sẽ gọi lại xác nhận trong ít phút.</p>
+          ${pay === "Chuyển khoản" && CAI.bank && CAI.stk ? `<div class="qr-box">
+            <img src="https://img.vietqr.io/image/${CAI.bank}-${CAI.stk}-compact2.png?amount=${sum}&addInfo=${encodeURIComponent(j.ma_don || "")}&accountName=${encodeURIComponent(un(CAI.chu_tk || ""))}" alt="Mã QR chuyển khoản" width="260" height="300">
+            <div><b>Quét mã bằng app ngân hàng để chuyển khoản</b>
+              <p>Ngân hàng: <b>${NGAN_HANG[CAI.bank] || ""}</b><br>Số tài khoản: <b>${CAI.stk}</b><br>Chủ tài khoản: <b>${CAI.chu_tk || ""}</b><br>Số tiền: <b>${fmt(sum)}</b><br>Nội dung: <b>${esc(j.ma_don || "")}</b></p>
+              <small>Mã QR đã điền sẵn số tiền và nội dung. Cửa hàng sẽ xác nhận khi nhận được tiền.</small></div></div>` : "<br>"}
           <a href="#trang-chu" class="btn btn-primary">Tiếp tục mua sắm</a></div>`;
         scrollTo({ top: 0 });
+        ga("purchase", { transaction_id: j.ma_don, value: sum, currency: "VND", items: [] });
       })
       .catch(() => { m.textContent = failText(); busy(f, false); });
   }

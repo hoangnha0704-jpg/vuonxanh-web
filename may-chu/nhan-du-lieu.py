@@ -43,13 +43,16 @@ BANG = {
                                   "trang_thai", "tong", "ghi_chu_shop", "ngay_giao", "cap_nhat"]),
     "tu_van": ("Yêu cầu tư vấn", ["thoi_gian", "ho_ten", "dien_thoai", "email", "noi_dung", "ip", "trang_thai", "ghi_chu_shop", "cap_nhat"]),
     "dang_ky": ("Email đăng ký nhận tin", ["thoi_gian", "email", "ip"]),
+    "danh_gia": ("Đánh giá sản phẩm", ["thoi_gian", "sp_id", "ten", "sao", "noi_dung", "anh", "trang_thai", "phan_hoi", "ip"]),
 }
 TEN_COT = {"thoi_gian": "Thời gian", "ma_don": "Mã đơn", "ho_ten": "Họ tên", "dien_thoai": "Điện thoại", "dia_chi": "Địa chỉ",
            "san_pham": "Sản phẩm", "tong_tien": "Tổng tiền", "thanh_toan": "Thanh toán", "ghi_chu": "Ghi chú",
            "email": "Email", "noi_dung": "Nội dung", "ip": "IP", "trang_thai": "Trạng thái", "tong": "Tổng (số)",
-           "ghi_chu_shop": "Ghi chú cửa hàng", "ngay_giao": "Ngày giao", "cap_nhat": "Cập nhật lúc"}
+           "ghi_chu_shop": "Ghi chú cửa hàng", "ngay_giao": "Ngày giao", "cap_nhat": "Cập nhật lúc",
+           "sp_id": "Mã sản phẩm", "ten": "Tên khách", "sao": "Số sao", "anh": "Ảnh", "phan_hoi": "Cửa hàng phản hồi"}
 # Trạng thái đơn hàng / tư vấn (giá trị lưu -> chữ hiện)
 TT_DON = {"moi": "Mới", "xac_nhan": "Đã xác nhận", "dang_giao": "Đang giao", "da_giao": "Đã giao", "huy": "Đã hủy"}
+TT_DG = {"cho_duyet": "Chờ duyệt", "hien": "Đang hiện", "an": "Đã ẩn"}
 TT_TV = {"moi": "Mới", "da_lien_he": "Đã liên hệ", "xong": "Xong", "bo_qua": "Bỏ qua"}
 
 PHONE = re.compile(r"^(0|\+84)[0-9 .]{8,12}$")
@@ -71,6 +74,7 @@ def ket_noi():
         con.execute("UPDATE don_hang SET tong = ? WHERE id = ?", (re.sub(r"[^0-9]", "", tt or "") or "0", rid))
     con.execute("UPDATE don_hang SET trang_thai = 'moi' WHERE trang_thai IS NULL OR trang_thai = ''")
     con.execute("UPDATE tu_van SET trang_thai = 'moi' WHERE trang_thai IS NULL OR trang_thai = ''")
+    con.execute("UPDATE danh_gia SET trang_thai = 'cho_duyet' WHERE trang_thai IS NULL OR trang_thai = ''")
     con.commit()
     return con
 
@@ -160,6 +164,23 @@ def xu_ly(duong_dan, d, ip):
         luu("tu_van", {"thoi_gian": now, "ho_ten": ten, "dien_thoai": sdt, "email": chu(d.get("email"), 120), "noi_dung": nd, "ip": ip,
                        "trang_thai": "moi", "ghi_chu_shop": "", "cap_nhat": ""})
         bao_telegram(f"💬 YÊU CẦU TƯ VẤN MỚI\n👤 {ten}\n📞 {sdt}\n📝 {nd}{link_qt()}")
+        return 200, {"ok": True}
+    if duong_dan == "/api/danh-gia":
+        sp_id, ten, nd = so_id(d.get("sp_id"), 5000), chu(d.get("ten"), 60), chu(d.get("noi_dung"), 1500)
+        try:
+            sao = int(d.get("sao"))
+        except (TypeError, ValueError):
+            sao = 0
+        if sp_id is None or not 1 <= sao <= 5 or len(ten) < 2 or len(nd) < 5:
+            return 400, {"ok": False, "loi": "Vui lòng nhập tên, chọn số sao và viết vài dòng nhận xét."}
+        anh = ""
+        if d.get("anh"):
+            anh, loi = ghi_anh(d.get("anh"), 2 * 1024 * 1024, "dg-")
+            if loi:
+                return 400, {"ok": False, "loi": loi}
+        luu("danh_gia", {"thoi_gian": now, "sp_id": str(sp_id), "ten": ten, "sao": str(sao), "noi_dung": nd, "anh": anh or "",
+                         "trang_thai": "cho_duyet", "phan_hoi": "", "ip": ip})
+        bao_telegram(f"⭐ ĐÁNH GIÁ MỚI chờ duyệt ({sao}/5)\n👤 {ten} – sản phẩm số {sp_id}\n📝 {nd}" + (" (có ảnh)" if anh else "") + link_qt())
         return 200, {"ok": True}
     if duong_dan == "/api/dang-ky":
         em = chu(d.get("email"), 120)
@@ -260,8 +281,22 @@ def nd_ghi(d):
     nd_sitemap(d)
 
 
+def dg_cong_khai():
+    """Đánh giá đã duyệt, nhóm theo sản phẩm (đã mã hóa HTML)."""
+    kq = {}
+    with LOCK:
+        con = ket_noi()
+        rows = con.execute("SELECT sp_id, ten, sao, noi_dung, anh, phan_hoi, thoi_gian FROM danh_gia WHERE trang_thai = 'hien' ORDER BY id DESC").fetchall()
+        con.close()
+    for sp, ten, sao, nd, anh, ph, tg in rows:
+        kq.setdefault(str(sp), []).append({"t": html.escape(ten or ""), "s": int(sao or 0), "n": html.escape(nd or "").replace("\n", "<br>"),
+                                           "a": anh_hop_le(anh), "p": html.escape(ph or "").replace("\n", "<br>"), "d": (tg or "")[:10]})
+    return kq
+
+
 def nd_xuat_js(d=None):
     d = d if d is not None else nd_doc()
+    d = dict(d, dg=dg_cong_khai())
     du_lieu = json.dumps(d, ensure_ascii=False).replace("</", "<\\/")
     js = """// Tự tạo bởi trang quản trị – không sửa tay
 (function () {
@@ -271,7 +306,7 @@ def nd_xuat_js(d=None):
   Object.keys(D.sp).forEach(function (k) {
     var i = +k, r = D.sp[k];
     var p = PRODUCTS[i] || (PRODUCTS[i] = { art: macDinh, cats: [], short: "", size: "", light: "", price: 0, name: "" });
-    ["name", "price", "cats", "size", "light", "short", "an", "them", "kw", "seoTitle", "seoDesc", "alt"].forEach(function (f) { if (r[f] !== undefined) p[f] = r[f]; });
+    ["name", "price", "cats", "size", "light", "short", "an", "them", "kw", "seoTitle", "seoDesc", "alt", "kho", "tuoi", "thuCung", "caoMax", "gal"].forEach(function (f) { if (r[f] !== undefined) p[f] = r[f]; });
     p.id = i; p.msp = 300 + i; p.stock = r.stock !== false;
     if (r.img) p.art = Object.assign({}, p.art, { img: r.img });
     p.art = Object.assign({}, p.art, { alt: r.alt || p.name });
@@ -302,6 +337,7 @@ def nd_xuat_js(d=None):
   window.DM_NHOM = N;
   if (D.hot) window.HOT_IDS = D.hot;
   window.CAI_DAT = D.cai_dat || {};
+  window.DANH_GIA = D.dg || {};
 })();
 """ % du_lieu
     tam = ND_JS + ".tmp"
@@ -364,7 +400,12 @@ def luu_san_pham(d):
         if not cats:
             return 400, {"ok": False, "loi": "Chọn ít nhất một danh mục."}
         r.update({"name": ten, "price": gia, "cats": cats, "size": e(d.get("size"), 80), "light": e(d.get("light"), 80),
-                  "short": e(d.get("short"), 600), "stock": bool(d.get("stock", True)), "an": False, **seo(d)})
+                  "short": e(d.get("short"), 600), "stock": bool(d.get("stock", True)), "an": False, **seo(d),
+                  # thông tin chăm sóc (để trống = web tự dùng mặc định theo loại cây)
+                  "kho": d.get("kho") if d.get("kho") in ("de", "tb", "kho") else "",
+                  "thuCung": d.get("thuCung") if d.get("thuCung") in ("an_toan", "can_than", "gai", "chua_ro") else "",
+                  "tuoi": e(d.get("tuoi"), 80), "caoMax": e(d.get("caoMax"), 80),
+                  "gal": [u for u in (anh_hop_le(v) for v in (d.get("gal") or [])[:12]) if u]})
         anh = anh_hop_le(d.get("img"))
         if anh:
             r["img"] = anh
@@ -408,6 +449,26 @@ def luu_bai_viet(d):
     nd["bv"][str(i)] = r
     nd_ghi(nd)
     return 200, {"ok": True, "id": i}
+
+
+def ghi_anh(data_url, toi_da, tien_to=""):
+    """Lưu ảnh dạng data URL; trả (url, lỗi)."""
+    m = re.fullmatch(r"data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)", str(data_url or ""))
+    if not m:
+        return None, "File không phải ảnh."
+    try:
+        b = base64.b64decode(m.group(2), validate=True)
+    except ValueError:
+        return None, "Ảnh bị lỗi."
+    dau = {"jpeg": b"\xff\xd8\xff", "png": b"\x89PNG", "webp": b"RIFF"}[m.group(1)]
+    if not b.startswith(dau) or len(b) > toi_da:
+        return None, f"Ảnh không hợp lệ hoặc quá lớn (tối đa {toi_da // 1024 // 1024}MB)."
+    os.makedirs(ANH_DIR, exist_ok=True)
+    duoi = "jpg" if m.group(1) == "jpeg" else m.group(1)
+    ten = f"{tien_to}{datetime.now(VN):%Y%m%d-%H%M%S}-{secrets.token_hex(3)}.{duoi}"
+    with open(os.path.join(ANH_DIR, ten), "wb") as f:
+        f.write(b)
+    return f"/anh-tai-len/{ten}", None
 
 
 def luu_anh(d):
@@ -503,17 +564,20 @@ def du_lieu_khach():
     for x in tv:
         x.pop("ip", None)
     dk = [{"id": x["id"], "thoi_gian": x["thoi_gian"], "email": x["email"]} for x in doc_dict("dang_ky")]
-    return {"don_hang": don, "tu_van": tv, "dang_ky": dk, "tt_don": TT_DON, "tt_tv": TT_TV,
+    dg = doc_dict("danh_gia")
+    for x in dg:
+        x.pop("ip", None)
+    return {"don_hang": don, "tu_van": tv, "dang_ky": dk, "danh_gia": dg, "tt_don": TT_DON, "tt_tv": TT_TV, "tt_dg": TT_DG,
             "sao_luu": {"moi_nhat": ds[-1][9:-7] if ds else "", "so_ban": len(ds)}}
 
 
 def sua_don(d):
     """Đổi trạng thái / ghi chú của đơn hàng hoặc yêu cầu tư vấn."""
-    bang = "tu_van" if d.get("loai") == "tu_van" else "don_hang"
+    bang = d.get("loai") if d.get("loai") in ("tu_van", "danh_gia") else "don_hang"
     i = so_id(d.get("id"), 10_000_000)
     if i is None:
         return 400, {"ok": False, "loi": "Mục không hợp lệ."}
-    hop_le = TT_TV if bang == "tu_van" else TT_DON
+    hop_le = TT_TV if bang == "tu_van" else TT_DG if bang == "danh_gia" else TT_DON
     now = datetime.now(VN).strftime("%Y-%m-%d %H:%M")
     with LOCK:
         con = ket_noi()
@@ -526,23 +590,42 @@ def sua_don(d):
             if tt not in hop_le:
                 con.close()
                 return 400, {"ok": False, "loi": "Trạng thái không hợp lệ."}
-            con.execute(f"UPDATE {bang} SET trang_thai = ?, cap_nhat = ? WHERE id = ?", (tt, now, i))
+            if bang == "danh_gia":
+                con.execute("UPDATE danh_gia SET trang_thai = ? WHERE id = ?", (tt, i))
+            else:
+                con.execute(f"UPDATE {bang} SET trang_thai = ?, cap_nhat = ? WHERE id = ?", (tt, now, i))
             if bang == "don_hang":
                 # Ngày giao dùng để tính doanh thu theo tháng
                 if tt == "da_giao" and cu[0] != "da_giao":
                     con.execute("UPDATE don_hang SET ngay_giao = ? WHERE id = ?", (now, i))
                 elif tt != "da_giao":
                     con.execute("UPDATE don_hang SET ngay_giao = '' WHERE id = ?", (i,))
-        if "ghi_chu_shop" in d:
+        if "ghi_chu_shop" in d and bang != "danh_gia":
             con.execute(f"UPDATE {bang} SET ghi_chu_shop = ?, cap_nhat = ? WHERE id = ?", (chu(d.get("ghi_chu_shop"), 2000), now, i))
+        if "phan_hoi" in d and bang == "danh_gia":
+            con.execute("UPDATE danh_gia SET phan_hoi = ? WHERE id = ?", (chu(d.get("phan_hoi"), 1000), i))
+        if bang == "danh_gia" and d.get("xoa"):
+            con.execute("DELETE FROM danh_gia WHERE id = ?", (i,))
         con.commit()
         con.close()
+    if bang == "danh_gia":
+        nd_xuat_js()          # cập nhật đánh giá hiện trên web
     return 200, {"ok": True}
 
 
 def luu_cai_dat(d):
     nd = nd_doc()
-    nd["cai_dat"] = {"tet": bool(d.get("tet")), "thong_bao": e(d.get("thong_bao"), 160)}
+    try:
+        gio = int(d.get("gio_chot"))
+        gio = gio if 8 <= gio <= 20 else 15
+    except (TypeError, ValueError):
+        gio = 15
+    bank = chu(d.get("bank"), 10)
+    stk = re.sub(r"[^0-9]", "", chu(d.get("stk"), 30))
+    ga = chu(d.get("ga"), 20).upper()
+    nd["cai_dat"] = {"tet": bool(d.get("tet")), "thong_bao": e(d.get("thong_bao"), 160), "gio_chot": gio,
+                     "bank": bank if re.fullmatch(r"[0-9]{6}", bank) else "", "stk": stk if 6 <= len(stk) <= 20 else "",
+                     "chu_tk": e(chu(d.get("chu_tk"), 60).upper(), 60), "ga": ga if re.fullmatch(r"G-[A-Z0-9]{4,15}", ga) else ""}
     nd_ghi(nd)
     return 200, {"ok": True}
 
@@ -576,6 +659,13 @@ def thay_meta(h, ten, gia_tri, kieu="name"):
     return mau.sub(lambda _: the, h, count=1) if mau.search(h) else h.replace("</title>", "</title>\n  " + the, 1)
 
 
+def them_diem(ld, dg):
+    ld["aggregateRating"] = {"@type": "AggregateRating", "ratingValue": round(sum(x["s"] for x in dg) / len(dg), 1), "reviewCount": len(dg), "bestRating": 5}
+    ld["review"] = [{"@type": "Review", "author": {"@type": "Person", "name": html.unescape(x["t"])}, "datePublished": x["d"],
+                     "reviewRating": {"@type": "Rating", "ratingValue": x["s"], "bestRating": 5},
+                     "reviewBody": html.unescape(re.sub(r"<br>", " ", x["n"]))[:500]} for x in dg[:5]]
+
+
 def trang_seo(duong):
     """Trả (mã HTTP, html) hoặc None nếu không phải trang cần xử lý."""
     m = TRANG_RE.match(duong)
@@ -588,8 +678,20 @@ def trang_seo(duong):
     r = (nd["dm"].get(dm) if dm else nd[{"san-pham": "sp", "bai-viet": "bv", "du-an": "da"}[loai]].get(str(int(so)))) or None
     if r and r.get("an") or (not r and tinh is None):
         return 404, doc_file("404.html") or "Không tìm thấy trang"
-    if not r:
+    dg = dg_cong_khai().get(str(int(so))) if loai == "san-pham" else None
+    if not r and not dg:
         return 200, tinh
+    if not r:
+        # Trang chưa sửa nhưng có đánh giá: chỉ thêm điểm đánh giá vào dữ liệu sản phẩm
+        m_ld = re.search(r'<script type="application/ld\+json">([\s\S]*?)</script>', tinh)
+        try:
+            ld = json.loads(m_ld.group(1)) if m_ld else None
+        except ValueError:
+            ld = None
+        if not ld or ld.get("@type") != "Product":
+            return 200, tinh
+        them_diem(ld, dg)
+        return 200, tinh.replace(m_ld.group(0), '<script type="application/ld+json">' + json.dumps(ld, ensure_ascii=False).replace("<", "\\u003c") + "</script>", 1)
     h = tinh if tinh is not None else doc_file("index.html") or ""
     tm = ten_mien()
     m_goc = re.search(r'<link rel="canonical" href="(https?://[^/"]+)', h)
@@ -625,6 +727,8 @@ def trang_seo(duong):
                          "availability": "https://schema.org/" + ("InStock" if r.get("stock", True) else "OutOfStock")}}
         if anh:
             ld["image"] = goc + anh
+        if dg:
+            them_diem(ld, dg)
     elif loai in ("bai-viet", "du-an"):
         ld = {"@context": "https://schema.org", "@type": "Article", "headline": ten[:110], "description": mo_ta,
               "author": {"@type": "Organization", "name": ten_shop}, "mainEntityOfPage": url}
@@ -715,7 +819,7 @@ class XuLy(BaseHTTPRequestHandler):
             n = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             n = 0
-        if n <= 0 or n > (9 * 1024 * 1024 if quan_tri else 32768):
+        if n <= 0 or n > (9 * 1024 * 1024 if quan_tri else 3 * 1024 * 1024 if duong == "/api/danh-gia" else 32768):
             return self.gui(400, {"ok": False})
         try:
             d = json.loads(self.rfile.read(n).decode("utf-8"))

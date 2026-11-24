@@ -51,3 +51,10 @@ bash vuonxanh-web-main/cai-dat.sh tenmien.com
 ## Giao diện (tab "Giao diện" trong quản trị)
 - Sửa dòng thông báo đầu trang (khuyến mãi, phí giao, nghỉ lễ)
 - Bật/tắt giao diện Tết: điểm nhấn đỏ son – vàng đồng, hoa mai/lì xì ở banner
+
+## Tăng niềm tin & chuyển đổi
+- **Thông tin chăm sóc từng cây**: độ khó, tưới nước, an toàn thú cưng, chiều cao khi trưởng thành (mặc định theo loại cây trong `data.js` → `CHAM_THEO_LOAI`, sửa riêng trong quản trị)
+- **Nhiều ảnh mỗi sản phẩm** (tối đa 12, tải trong quản trị)
+- **Đánh giá của khách**: khách gửi sao + nhận xét + ảnh ở trang sản phẩm → báo Telegram → duyệt/ẩn/phản hồi/xóa ở tab "Đơn hàng & khách" → hiện trên web, điểm sao trên thẻ sản phẩm, mục "Khách hàng nói gì" ở trang chủ, điểm đánh giá trong dữ liệu Google
+- **Tab Cài đặt**: dòng thông báo, giao diện Tết, giờ chốt đơn giao trong ngày, mã QR chuyển khoản (VietQR), Google Analytics 4 (page_view, view_item, add_to_cart, begin_checkout, purchase)
+- **Chọn cây giúp tôi** (`/chon-cay/`): 4 câu hỏi → gợi ý 4 cây kèm lý do

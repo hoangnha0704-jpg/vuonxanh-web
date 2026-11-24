@@ -87,6 +87,42 @@ const PRODUCTS = [
 ];
 PRODUCTS.forEach((p, i) => { p.id = i; p.msp = 300 + i; p.stock = true; });
 
+// Thông tin chăm sóc mặc định theo loại cây (trang quản trị có thể sửa riêng từng cây)
+//   kho: "de" | "tb" | "kho"      thuCung: "an_toan" | "can_than" | "gai" | "chua_ro"
+const CHAM_THEO_LOAI = [
+  [/kim tiền/i, { kho: "de", tuoi: "7–10 ngày/lần", thuCung: "can_than", caoMax: "1–1,5m" }],
+  [/kim ngân.*thủy sinh/i, { kho: "de", tuoi: "Thay nước 7–10 ngày/lần", thuCung: "an_toan", caoMax: "40–60cm" }],
+  [/kim ngân/i, { kho: "de", tuoi: "1 lần/tuần", thuCung: "an_toan", caoMax: "1,5–2m (tỉa giữ dáng)" }],
+  [/lưỡi hổ/i, { kho: "de", tuoi: "10–14 ngày/lần", thuCung: "can_than", caoMax: "60–90cm" }],
+  [/trầu bà.*thủy sinh/i, { kho: "de", tuoi: "Thay nước 7–10 ngày/lần", thuCung: "can_than", caoMax: "Dây dài 1–2m" }],
+  [/trầu bà/i, { kho: "de", tuoi: "1–2 lần/tuần", thuCung: "can_than", caoMax: "Leo cao 2–3m" }],
+  [/bàng singapore mini/i, { kho: "tb", tuoi: "1–2 lần/tuần", thuCung: "can_than", caoMax: "60–80cm" }],
+  [/bàng singapore/i, { kho: "tb", tuoi: "1 lần/tuần", thuCung: "can_than", caoMax: "2–3m" }],
+  [/monstera/i, { kho: "tb", tuoi: "1 lần/tuần", thuCung: "can_than", caoMax: "1,5–2m" }],
+  [/hạnh phúc/i, { kho: "tb", tuoi: "2 lần/tuần", thuCung: "an_toan", caoMax: "2–3m" }],
+  [/lan ý/i, { kho: "de", tuoi: "Thay nước 7–10 ngày/lần", thuCung: "can_than", caoMax: "40–60cm" }],
+  [/phát tài|trúc bách hợp|trúc nhật|thiết mộc lan/i, { kho: "de", tuoi: "1 lần/tuần", thuCung: "can_than", caoMax: "1,5–2m" }],
+  [/phú quý|đại phú gia/i, { kho: "de", tuoi: "1 lần/tuần", thuCung: "can_than", caoMax: "50–80cm" }],
+  [/huyết dụ/i, { kho: "de", tuoi: "2 lần/tuần", thuCung: "can_than", caoMax: "1–1,5m" }],
+  [/cau/i, { kho: "de", tuoi: "2 lần/tuần", thuCung: "an_toan", caoMax: "1,5–2m" }],
+  [/nam thiên trúc/i, { kho: "tb", tuoi: "2 lần/tuần", thuCung: "can_than", caoMax: "1–2m" }],
+  [/sen đá/i, { kho: "de", tuoi: "7–10 ngày/lần", thuCung: "an_toan", caoMax: "Mọc lan 15–25cm" }],
+  [/xương rồng/i, { kho: "de", tuoi: "2–3 tuần/lần", thuCung: "gai", caoMax: "Chậm lớn, 20–40cm" }],
+  [/hoa giấy|tường vi|dẻ vàng/i, { kho: "tb", tuoi: "Hằng ngày khi nắng nóng", thuCung: "chua_ro", caoMax: "2–4m" }],
+  [/terrarium/i, { kho: "de", tuoi: "Phun sương 1–2 tuần/lần", thuCung: "chua_ro", caoMax: "Giữ nguyên trong bình" }],
+];
+const CHAM_MAC_DINH = (p) => (CHAM_THEO_LOAI.find(([re]) => re.test(p.name)) || [0, { kho: "tb", tuoi: "1–2 lần/tuần", thuCung: "chua_ro", caoMax: "" }])[1];
+const KHO_CHU = { de: ["Dễ chăm", "Hợp người mới, chịu được quên tưới"], tb: ["Trung bình", "Cần đủ sáng và tưới đều"], kho: ["Cần kinh nghiệm", "Nhạy với ánh sáng, nước"] };
+const THU_CUNG_CHU = { an_toan: ["An toàn", "Được ghi nhận không độc với chó mèo"], can_than: ["Để xa thú cưng", "Có thể gây kích ứng nếu chó mèo nhai lá"],
+  gai: ["Có gai", "Để xa tầm tay trẻ nhỏ và thú cưng"], chua_ro: ["Chưa rõ", "Nên để xa tầm với của thú cưng"] };
+
+// Ngân hàng cho mã QR chuyển khoản (mã BIN theo chuẩn VietQR/NAPAS)
+const NGAN_HANG = { "970436": "Vietcombank", "970415": "VietinBank", "970418": "BIDV", "970405": "Agribank", "970407": "Techcombank", "970422": "MB Bank",
+  "970416": "ACB", "970432": "VPBank", "970423": "TPBank", "970403": "Sacombank", "970441": "VIB", "970443": "SHB", "970437": "HDBank", "970448": "OCB",
+  "970426": "MSB", "970440": "SeABank", "970449": "LPBank", "970428": "Nam A Bank", "970431": "Eximbank", "970409": "Bac A Bank", "970425": "ABBANK",
+  "970454": "BVBank (Bản Việt)", "970412": "PVcomBank", "970452": "Kienlongbank", "970433": "VietBank", "970419": "NCB", "970400": "Saigonbank",
+  "970438": "BaoViet Bank", "970427": "VietABank", "546034": "CAKE by VPBank" };
+
 // Cây bán chạy mặc định (số thứ tự sản phẩm). Trang quản trị có thể đổi danh sách này.
 const HOT_MAC_DINH = [12, 14, 21, 23, 6, 19, 25, 16, 1, 0, 20, 4];
 

@@ -99,6 +99,7 @@
   .od-h .tt { margin-left: auto; }
   .tt select { border-radius: 999px; padding: 6px 10px; font: inherit; font-weight: 600; font-size: 13.5px; border: 1px solid var(--line); cursor: pointer; }
   .tt-moi { background: #fbe3dc; color: #b4401f; } .tt-xac_nhan, .tt-da_lien_he { background: #e1ecf8; color: #275c9c; } .tt-dang_giao { background: #fbeed9; color: #95591a; }
+  .tt-cho_duyet { background: #fbe3dc; color: #b4401f; } .tt-hien { background: #e2f1df; color: #2f6b45; } .tt-an { background: #eeeeea; color: #6b6b66; }
   .tt-da_giao, .tt-xong { background: #e2f1df; color: #2f6b45; } .tt-huy, .tt-bo_qua { background: #eeeeea; color: #6b6b66; }
   .od-g { display: grid; grid-template-columns: 1.1fr 1.4fr 1fr; gap: 14px; font-size: 14px; }
   .od-g small { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; margin-bottom: 2px; }
@@ -154,7 +155,7 @@
 <body>
 <header>
   <div class="top"><b>🌿 Vườn Xanh · Quản trị</b><a href="/" target="_blank">Xem trang web ↗</a></div>
-  <nav class="tabs"><a href="#san-pham" data-tab="san-pham">Sản phẩm</a><a href="#danh-muc" data-tab="danh-muc">Danh mục</a><a href="#bai-viet" data-tab="bai-viet">Bài viết tin tức</a><a href="#du-an" data-tab="du-an">Dự án</a><a href="#giao-dien" data-tab="giao-dien">Giao diện</a><a href="#khach" data-tab="khach">Đơn hàng & khách <span id="badgeDon"></span></a></nav>
+  <nav class="tabs"><a href="#san-pham" data-tab="san-pham">Sản phẩm</a><a href="#danh-muc" data-tab="danh-muc">Danh mục</a><a href="#bai-viet" data-tab="bai-viet">Bài viết tin tức</a><a href="#du-an" data-tab="du-an">Dự án</a><a href="#giao-dien" data-tab="giao-dien">Cài đặt</a><a href="#khach" data-tab="khach">Đơn hàng & khách <span id="badgeDon"></span></a></nav>
 </header>
 <main id="main"><div class="empty">Đang tải…</div></main>
 
@@ -220,7 +221,8 @@ function trangSanPham() {
 let dang = null;   // dữ liệu đang sửa
 function suaSanPham(id) {
   const moi = id === "moi", p = moi ? { name: "", price: "", size: "", light: "", short: "", cats: [], stock: true, art: {} } : PRODUCTS[id];
-  dang = { loai: "sp", id, img: "" };
+  dang = { loai: "sp", id, img: "", gal: (p.gal || []).slice() };
+  const md = moi ? { kho: "", tuoi: "", thuCung: "", caoMax: "" } : CHAM_MAC_DINH(p);
   const hot = !moi && hotNow().includes(p.id);
   $("dlg").innerHTML = `<div class="dlg-head"><h3>${moi ? "Thêm sản phẩm mới" : "Sửa sản phẩm"}</h3><button class="x" data-dong aria-label="Đóng">×</button></div>
   <form class="ed" id="edForm">
@@ -233,13 +235,21 @@ function suaSanPham(id) {
     <label class="f">Mô tả ngắn<textarea id="fShort" rows="3" maxlength="600">${esc(unesc(p.short))}</textarea></label>
     <div class="f"><b style="font-size:14px">Danh mục * <small style="font-weight:400;color:var(--muted)">(chọn một hoặc nhiều)</small></b>
       <div class="cats">${Object.entries(CATEGORIES).filter(([k, c]) => !c.an || p.cats.includes(k)).map(([k, c]) => `<label><input type="checkbox" name="cat" value="${k}"${p.cats.includes(k) ? " checked" : ""}> ${c.name}</label>`).join("")}</div></div>
+    <div class="f"><b style="font-size:14px">Ảnh thêm <small style="font-weight:400;color:var(--muted)">(cận lá, cây đặt trong phòng, góc khác… – chọn nhiều ảnh một lúc, tối đa 12)</small></b>
+      <input type="file" id="fGal" accept="image/*" multiple><div class="gal" id="gal"></div></div>
+    <details class="seo"><summary>Thông tin chăm sóc <small style="font-weight:400;color:var(--muted)">– hiện ở trang sản phẩm, để trống = tự điền theo loại cây</small></summary><div class="seo-body">
+      <div class="row"><label class="f">Độ khó chăm<select id="fKho"><option value="">Tự động${md.kho ? ` (${KHO_CHU[md.kho][0]})` : ""}</option>${Object.entries(KHO_CHU).map(([k, v]) => `<option value="${k}"${p.kho === k ? " selected" : ""}>${v[0]}</option>`).join("")}</select></label>
+        <label class="f">Thú cưng<select id="fTC"><option value="">Tự động${md.thuCung ? ` (${THU_CUNG_CHU[md.thuCung][0]})` : ""}</option>${Object.entries(THU_CUNG_CHU).map(([k, v]) => `<option value="${k}"${p.thuCung === k ? " selected" : ""}>${v[0]} – ${v[1]}</option>`).join("")}</select></label></div>
+      <div class="row"><label class="f">Tưới nước<input id="fTuoi" maxlength="80" placeholder="${esc(md.tuoi || "Ví dụ: 1 lần/tuần")}" value="${esc(unesc(p.tuoi || ""))}"></label>
+        <label class="f">Khi trưởng thành cao<input id="fCao" maxlength="80" placeholder="${esc(md.caoMax || "Ví dụ: 1,5–2m")}" value="${esc(unesc(p.caoMax || ""))}"></label></div>
+    </div></details>
     <div class="checks"><label><input type="checkbox" id="fStock"${p.stock !== false ? " checked" : ""}> Còn hàng</label><label><input type="checkbox" id="fHot"${hot ? " checked" : ""}> Hiện trong "Cây bán chạy"</label></div>
     ${seoPanel("sp", p)}
     <p class="msg" id="edMsg"></p>
     <div class="actions"><div>${moi ? "" : p.an ? `<span style="color:var(--muted);font-size:14px">Sản phẩm này đang bị ẩn. Bấm Lưu để hiện lại.</span>` : `<button type="button" class="btn red" data-xoa>Xóa sản phẩm</button>`}</div>
       <div>${moi || p.an ? "" : `<a class="btn ghost" href="/san-pham-${p.id}/" target="_blank">Xem trên web ↗</a>`}<button class="btn" type="submit" id="edLuu">${p.an ? "Lưu và hiện lại" : "Lưu"}</button></div></div>
   </form>`;
-  $("dlg").showModal(); capNhatSeo();
+  $("dlg").showModal(); veGal(); capNhatSeo();
 }
 function goiSanPham() {
   const cats = [...document.querySelectorAll("input[name=cat]:checked")].map((x) => x.value);
@@ -247,7 +257,7 @@ function goiSanPham() {
   const on = $("fHot").checked;
   if (id !== "moi") { if (on && !hot.includes(+id)) hot.push(+id); if (!on) hot = hot.filter((x) => x !== +id); }
   const d = { id, base_len: PRODUCTS.length, name: $("fTen").value, price: $("fGia").value, size: $("fSize").value, light: $("fLight").value,
-    short: $("fShort").value, cats, stock: $("fStock").checked, img: dang.img || (id !== "moi" && PRODUCTS[id].art.img) || "", hot_ids: hot, hot: on };
+    short: $("fShort").value, cats, stock: $("fStock").checked, gal: dang.gal, kho: $("fKho").value, thuCung: $("fTC").value, tuoi: $("fTuoi").value, caoMax: $("fCao").value, img: dang.img || (id !== "moi" && PRODUCTS[id].art.img) || "", hot_ids: hot, hot: on };
   if (!d.name.trim()) throw new Error("Chưa nhập tên sản phẩm.");
   if (d.price === "") throw new Error("Chưa nhập giá.");
   if (!cats.length) throw new Error("Chọn ít nhất một danh mục.");
@@ -505,9 +515,9 @@ async function taiKhach() {
   const r = await fetch("/quan-tri/api/khach", { cache: "no-store" });
   if (!r.ok) throw new Error("Không tải được dữ liệu");
   KH = await r.json();
-  const moi = KH.don_hang.filter((d) => d.trang_thai === "moi").length + KH.tu_van.filter((d) => d.trang_thai === "moi").length;
-  $("badgeDon").textContent = moi || "";
+  $("badgeDon").textContent = soViecMoi() || "";
 }
+const soViecMoi = () => KH.don_hang.filter((d) => d.trang_thai === "moi").length + KH.tu_van.filter((d) => d.trang_thai === "moi").length + (KH.danh_gia || []).filter((d) => d.trang_thai === "cho_duyet").length;
 async function trangKhach() {
   if (!KH) { $("main").innerHTML = `<div class="empty">Đang tải đơn hàng…</div>`; try { await taiKhach(); } catch (e) { $("main").innerHTML = `<div class="empty">${e.message}</div>`; return; } }
   if ((location.hash.slice(1) || "san-pham") !== "khach") return;
@@ -522,13 +532,14 @@ function veKhach() {
   const choXL = KH.don_hang.filter((d) => d.trang_thai === "moi").length;
   const dangGiao = KH.don_hang.filter((d) => d.trang_thai === "xac_nhan" || d.trang_thai === "dang_giao").length;
   const tvMoi = KH.tu_van.filter((d) => d.trang_thai === "moi").length;
+  const dgCho = KH.danh_gia.filter((d) => d.trang_thai === "cho_duyet").length;
   // 12 tháng gần nhất
   const thangs = Array.from({ length: 12 }, (_, k) => lui(tn, 11 - k));
   const dt12 = thangs.map((t) => [t, sum(doanhThu(t)), doanhThu(t).length]);
   const max = Math.max(1, ...dt12.map(([, v]) => v));
   const tongNam = dt12.reduce((t, [, v]) => t + v, 0);
   const stats = `<div class="stats">
-    <button class="stat ${choXL ? "warn" : ""}" data-loc-tt="moi"><small>Đơn mới chờ xử lý</small><b>${choXL}</b><em>${tvMoi ? `+ ${tvMoi} yêu cầu tư vấn mới` : "Bấm để xem"}</em></button>
+    <button class="stat ${choXL ? "warn" : ""}" data-loc-tt="moi"><small>Đơn mới chờ xử lý</small><b>${choXL}</b><em>${[tvMoi ? `+ ${tvMoi} tư vấn mới` : "", dgCho ? `${dgCho} đánh giá chờ duyệt` : ""].filter(Boolean).join(" · ") || "Bấm để xem"}</em></button>
     <button class="stat" data-loc-tt="dang"><small>Đang xác nhận / giao</small><b>${dangGiao}</b><em>đơn chưa giao xong</em></button>
     <button class="stat" data-loc-tt="da_giao" data-loc-thang="${tn}"><small>Đã giao ${tenThang(tn)}</small><b>${dtNay.length}</b><em>đơn · ${tenThang(tt)}: ${dtTruoc.length}</em></button>
     <button class="stat money" data-loc-tt="da_giao" data-loc-thang="${tn}"><small>Doanh thu ${tenThang(tn)}</small><b>${fmt(sNay)}</b>
@@ -540,8 +551,9 @@ function veKhach() {
   const sub = `<div class="subtabs">
     <button data-muc="don" class="${LOC.muc === "don" ? "on" : ""}">Đơn hàng (${KH.don_hang.length})</button>
     <button data-muc="tu_van" class="${LOC.muc === "tu_van" ? "on" : ""}">Yêu cầu tư vấn${tvMoi ? ` (${tvMoi} mới)` : ` (${KH.tu_van.length})`}</button>
+    <button data-muc="danh_gia" class="${LOC.muc === "danh_gia" ? "on" : ""}">Đánh giá${dgCho ? ` (${dgCho} chờ duyệt)` : ` (${KH.danh_gia.length})`}</button>
     <button data-muc="dang_ky" class="${LOC.muc === "dang_ky" ? "on" : ""}">Email đăng ký (${KH.dang_ky.length})</button></div>`;
-  const body = LOC.muc === "don" ? veDon() : LOC.muc === "tu_van" ? veTuVan() : veEmail();
+  const body = LOC.muc === "don" ? veDon() : LOC.muc === "tu_van" ? veTuVan() : LOC.muc === "danh_gia" ? veDanhGia() : veEmail();
   const bk = KH.sao_luu.moi_nhat ? `Bản sao lưu gần nhất: <b>${KH.sao_luu.moi_nhat}</b> · ${KH.sao_luu.so_ban} bản trên máy chủ (tự sao lưu 2h30 sáng mỗi ngày).` : "Chưa có bản sao lưu nào (máy chủ tự sao lưu 2h30 sáng mỗi ngày).";
   return stats + chart + sub + body + `<div class="backup"><span>💾 ${bk}</span>${KH.sao_luu.moi_nhat ? `<a class="btn ghost sm" href="/quan-tri/sao-luu">Tải bản sao lưu</a>` : ""}</div>`;
 }
@@ -599,6 +611,19 @@ function veTuVan() {
         <a class="btn ghost sm" href="tel:${sdtSo(d.dien_thoai)}">📞 Gọi</a><a class="btn ghost sm" href="https://zalo.me/${sdtSo(d.dien_thoai).replace(/^\+84/, "0")}" target="_blank" rel="noopener">Zalo</a></div>
     </div>`).join("") || `<div class="empty">Chưa có yêu cầu tư vấn</div>`}</div>`;
 }
+function veDanhGia() {
+  const ds = KH.danh_gia;
+  const ten = (id) => (PRODUCTS[id] ? unesc(PRODUCTS[id].name) : `Sản phẩm số ${id}`);
+  return `<div class="help">Đánh giá khách gửi ở trang sản phẩm. Bấm <b>Duyệt</b> để hiện lên web (kèm số sao trên Google). Đánh giá xấu nhưng thật thì nên giữ và <b>phản hồi</b> lịch sự – khách tin hơn khi thấy cửa hàng xử lý.</div>
+    <div class="orders">${ds.map((d) => `<div class="od ${d.trang_thai === "hien" ? "da_giao" : d.trang_thai === "an" ? "huy" : "moi"}">
+      <div class="od-h"><b>${"★".repeat(+d.sao)}${"☆".repeat(5 - d.sao)}</b><b style="font-size:15px">${esc(d.ten)}</b><small>${esc(d.thoi_gian)} · <a href="/san-pham-${d.sp_id}/" target="_blank">${esc(ten(d.sp_id))}</a></small><span class="tt">${chonTT("danh_gia", d, KH.tt_dg)}</span></div>
+      <div style="font-size:15px;line-height:1.6">${esc(d.noi_dung)}</div>
+      ${d.anh ? `<a href="${d.anh}" target="_blank"><img src="${d.anh}" alt="" style="width:120px;height:120px;object-fit:cover;border-radius:10px"></a>` : ""}
+      <div class="od-f"><textarea data-ph="${d.id}" rows="1" placeholder="Phản hồi của cửa hàng (hiện dưới đánh giá trên web)…">${esc(d.phan_hoi || "")}</textarea>
+        ${d.trang_thai !== "hien" ? `<button class="btn sm next" data-dg-tt="${d.id}" data-v="hien">Duyệt – hiện lên web</button>` : `<button class="btn ghost sm" data-dg-tt="${d.id}" data-v="an">Ẩn</button>`}
+        <button class="btn red sm" data-dg-xoa="${d.id}">Xóa</button></div>
+    </div>`).join("") || `<div class="empty">Chưa có đánh giá nào. Gợi ý: nhắn khách đã mua xin đánh giá kèm ảnh cây.</div>`}</div>`;
+}
 function veEmail() {
   return `<div class="bar" style="justify-content:flex-end"><button class="btn ghost sm" data-copy="${esc(KH.dang_ky.map((d) => d.email).join(", "))}">Sao chép tất cả email</button><a class="btn ghost sm" href="/quan-tri/tai/dang_ky.csv">Tải Excel</a></div>
     <table class="mail"><thead><tr><th>Email</th><th>Ngày đăng ký</th></tr></thead><tbody>${KH.dang_ky.map((d) => `<tr><td>${esc(d.email)}</td><td>${esc(d.thoi_gian)}</td></tr>`).join("") || `<tr><td colspan="2" class="empty">Chưa có ai đăng ký</td></tr>`}</tbody></table>`;
@@ -606,28 +631,38 @@ function veEmail() {
 async function doiTrangThai(bang, id, tt) {
   try {
     await gui("/quan-tri/api/sua-don", { loai: bang, id, trang_thai: tt });
-    const ds = bang === "tu_van" ? KH.tu_van : KH.don_hang, d = ds.find((x) => x.id === id);
+    const ds = bang === "tu_van" ? KH.tu_van : bang === "danh_gia" ? KH.danh_gia : KH.don_hang, d = ds.find((x) => x.id === id);
     const now = new Date(), s = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     if (bang === "don_hang") d.ngay_giao = tt === "da_giao" ? (d.trang_thai === "da_giao" ? d.ngay_giao : s) : "";
     d.trang_thai = tt;
-    toast(`Đã chuyển sang “${(bang === "tu_van" ? KH.tt_tv : KH.tt_don)[tt]}”`);
-    const moi = KH.don_hang.filter((x) => x.trang_thai === "moi").length + KH.tu_van.filter((x) => x.trang_thai === "moi").length;
-    $("badgeDon").textContent = moi || "";
+    toast(`Đã chuyển sang “${(bang === "tu_van" ? KH.tt_tv : bang === "danh_gia" ? KH.tt_dg : KH.tt_don)[tt]}”`);
+    $("badgeDon").textContent = soViecMoi() || "";
     trangKhach();
   } catch (e) { toast(e.message); trangKhach(); }
 }
 document.addEventListener("click", (e) => {
-  const t = e.target.closest("[data-loc-tt],[data-muc],[data-tiep],[data-copy]");
+  const t = e.target.closest("[data-loc-tt],[data-muc],[data-tiep],[data-copy],[data-dg-tt],[data-dg-xoa]");
   if (!t || !KH) return;
   if (t.dataset.muc) { LOC.muc = t.dataset.muc; LOC.q = ""; return trangKhach(); }
   if (t.dataset.locTt) { LOC.muc = "don"; LOC.tt = t.dataset.locTt; LOC.thang = t.dataset.locThang || (t.classList.contains("fchip") ? LOC.thang : ""); trangKhach(); if (t.classList.contains("stat") || t.classList.contains("cot")) document.querySelector(".subtabs").scrollIntoView({ behavior: "smooth" }); return; }
   if (t.dataset.tiep) return doiTrangThai("don_hang", +t.dataset.tiep, t.dataset.ttMoi);
+  if (t.dataset.dgTt) return doiTrangThai("danh_gia", +t.dataset.dgTt, t.dataset.v);
+  if (t.dataset.dgXoa) {
+    if (!confirm("Xóa hẳn đánh giá này?")) return;
+    const id = +t.dataset.dgXoa;
+    return gui("/quan-tri/api/sua-don", { loai: "danh_gia", id, xoa: true }).then(() => { KH.danh_gia = KH.danh_gia.filter((x) => x.id !== id); toast("Đã xóa"); $("badgeDon").textContent = soViecMoi() || ""; trangKhach(); }, (err) => toast(err.message));
+  }
   if (t.dataset.copy !== undefined) { navigator.clipboard.writeText(t.dataset.copy).then(() => toast("Đã sao chép"), () => toast("Không sao chép được")); }
 });
 document.addEventListener("change", (e) => {
   const t = e.target;
   if (t.dataset && t.dataset.tt) return doiTrangThai(t.dataset.bang, +t.dataset.tt, t.value);
   if (t.id === "locThang") { LOC.thang = t.value; return trangKhach(); }
+  if (t.dataset && t.dataset.ph) {
+    const id = +t.dataset.ph;
+    gui("/quan-tri/api/sua-don", { loai: "danh_gia", id, phan_hoi: t.value }).then(() => { KH.danh_gia.find((x) => x.id === id).phan_hoi = t.value; toast("Đã lưu phản hồi"); }, (err) => toast(err.message));
+    return;
+  }
   if (t.dataset && t.dataset.note) {
     const bang = t.dataset.bang, id = +t.dataset.note;
     gui("/quan-tri/api/sua-don", { loai: bang, id, ghi_chu_shop: t.value }).then(() => {
@@ -650,6 +685,18 @@ function trangGiaoDien() {
     <div class="gdxem" id="gdXem" style="border-radius:10px;padding:8px 14px;font-size:13px;text-align:center"></div>
     <div class="checks" style="flex-direction:column;gap:6px"><label style="font-weight:600"><input type="checkbox" id="gdTet"${c.tet ? " checked" : ""}> Bật giao diện Tết 🧧</label>
       <small style="color:var(--muted);margin-left:26px">Điểm nhấn đỏ son – vàng đồng, hoa mai/bao lì xì ở banner, nhãn “Bán chạy” màu đỏ. Nên bật từ khoảng giữa tháng 12 âm lịch đến hết rằm tháng Giêng, rồi tắt để về giao diện xanh thường ngày.</small></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:4px 0">
+    <label class="f">Giờ chốt đơn giao trong ngày <small>Trang sản phẩm hiện “Đặt trong 2 giờ 15 phút nữa để nhận cây hôm nay”. Sau giờ này sẽ hiện “giao sáng mai”.</small>
+      <select id="gdGio" style="max-width:160px">${Array.from({ length: 13 }, (_, k) => k + 8).map((h) => `<option value="${h}"${(c.gio_chot || 15) === h ? " selected" : ""}>${h}h</option>`).join("")}</select></label>
+    <hr style="border:0;border-top:1px solid var(--line);margin:4px 0">
+    <div class="f"><b style="font-size:14px">Mã QR chuyển khoản <small style="font-weight:400;color:var(--muted)">– khách chọn “Chuyển khoản” sẽ thấy mã QR đã điền sẵn số tiền và mã đơn ngay sau khi đặt. Để trống = tắt.</small></b></div>
+    <div class="row"><label class="f">Ngân hàng<select id="gdBank"><option value="">— Chưa dùng —</option>${Object.entries(NGAN_HANG).map(([k, v]) => `<option value="${k}"${c.bank === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>
+      <label class="f">Số tài khoản<input id="gdStk" inputmode="numeric" maxlength="20" value="${esc(c.stk || "")}"></label></div>
+    <label class="f">Tên chủ tài khoản <small>Viết hoa không dấu, đúng như trên app ngân hàng</small><input id="gdChu" maxlength="60" placeholder="NGUYEN VAN A" value="${esc(unesc(c.chu_tk || ""))}"></label>
+    <div id="gdQR" style="display:flex;gap:14px;align-items:center"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:4px 0">
+    <label class="f">Mã Google Analytics (GA4) <small>Dạng G-XXXXXXXXXX – lấy ở analytics.google.com → Quản trị → Luồng dữ liệu. Dùng để biết có bao nhiêu khách vào web, xem cây nào, thêm giỏ, đặt hàng.</small>
+      <input id="gdGA" maxlength="20" placeholder="G-XXXXXXXXXX" value="${esc(c.ga || "")}" style="max-width:260px"></label>
     <p class="msg" id="edMsg"></p>
     <div class="actions"><span></span><div><a class="btn ghost" href="/" target="_blank">Xem trang web ↗</a><button class="btn" type="submit" id="edLuu">Lưu</button></div></div>
   </form>`;
@@ -660,13 +707,20 @@ function xemGD() {
   $("gdXem").textContent = $("gdTB").value.trim() || TB_MAC_DINH;
   $("gdXem").style.background = tet ? "linear-gradient(90deg,#8e1a14,#b3261e 50%,#8e1a14)" : "#234f34";
   $("gdXem").style.color = tet ? "#ffe9b8" : "#e3efe0";
+  const b = $("gdBank").value, stk = $("gdStk").value.replace(/\D/g, ""), ten = $("gdChu").value.trim();
+  $("gdQR").innerHTML = b && stk.length >= 6 ? `<img src="https://img.vietqr.io/image/${b}-${stk}-compact2.png?amount=100000&addInfo=VXTHU&accountName=${encodeURIComponent(ten)}" alt="" width="120" style="border-radius:8px;border:1px solid var(--line)">
+    <small style="color:var(--muted)">Mã thử 100.000₫ – quét bằng app ngân hàng để kiểm tra đúng tên chủ tài khoản (không cần chuyển).</small>` : "";
 }
 document.addEventListener("input", (e) => { if (e.target.closest && e.target.closest("#gdForm")) xemGD(); });
 document.addEventListener("change", (e) => { if (e.target.closest && e.target.closest("#gdForm")) xemGD(); });
 document.addEventListener("submit", async (e) => {
   if (e.target.id !== "gdForm") return;
   e.preventDefault();
-  try { await gui("/quan-tri/api/cai-dat", { tet: $("gdTet").checked, thong_bao: $("gdTB").value }); xong("Đã lưu giao diện"); }
+  const stk = $("gdStk").value.replace(/\D/g, "");
+  if ($("gdBank").value && stk.length < 6) { $("edMsg").textContent = "Số tài khoản chưa đúng."; return; }
+  const gaId = $("gdGA").value.trim().toUpperCase();
+  if (gaId && !/^G-[A-Z0-9]{4,15}$/.test(gaId)) { $("edMsg").textContent = "Mã Google Analytics cần dạng G-XXXXXXXXXX."; return; }
+  try { await gui("/quan-tri/api/cai-dat", { tet: $("gdTet").checked, thong_bao: $("gdTB").value, gio_chot: +$("gdGio").value, bank: $("gdBank").value, stk, chu_tk: $("gdChu").value, ga: gaId }); xong("Đã lưu cài đặt"); }
   catch (err) { $("edMsg").textContent = err.message; }
 });
 
@@ -674,7 +728,7 @@ document.addEventListener("submit", async (e) => {
 function ve() {
   const tab = (location.hash.slice(1) || "san-pham");
   document.querySelectorAll("[data-tab]").forEach((a) => a.classList.toggle("on", a.dataset.tab === tab));
-  if (tab === "khach") return trangKhach();
+  if (tab === "khach") { KH = null; return trangKhach(); }   // luôn tải dữ liệu mới khi mở tab
   if (tab === "giao-dien") { $("main").innerHTML = trangGiaoDien(); xemGD(); return; }
   $("main").innerHTML = tab === "bai-viet" ? trangBaiViet() : tab === "danh-muc" ? trangDanhMuc() : tab === "du-an" ? trangDuAn() : trangSanPham();
 }
