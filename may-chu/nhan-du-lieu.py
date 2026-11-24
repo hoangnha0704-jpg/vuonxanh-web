@@ -36,16 +36,21 @@ SITEMAP = os.path.join(THU_MUC, "sitemap.xml")
 TRANG_QT = os.environ.get("VX_ADMIN_HTML", os.path.join(os.path.dirname(os.path.abspath(__file__)), "quan-tri.html"))
 PORT = int(os.environ.get("VX_PORT", "8090"))
 VN = timezone(timedelta(hours=7))
-LOCK = threading.Lock()
+LOCK = threading.RLock()
 
 BANG = {
-    "don_hang": ("Đơn đặt hàng", ["thoi_gian", "ma_don", "ho_ten", "dien_thoai", "dia_chi", "san_pham", "tong_tien", "thanh_toan", "ghi_chu", "ip"]),
-    "tu_van": ("Yêu cầu tư vấn", ["thoi_gian", "ho_ten", "dien_thoai", "email", "noi_dung", "ip"]),
+    "don_hang": ("Đơn đặt hàng", ["thoi_gian", "ma_don", "ho_ten", "dien_thoai", "dia_chi", "san_pham", "tong_tien", "thanh_toan", "ghi_chu", "ip",
+                                  "trang_thai", "tong", "ghi_chu_shop", "ngay_giao", "cap_nhat"]),
+    "tu_van": ("Yêu cầu tư vấn", ["thoi_gian", "ho_ten", "dien_thoai", "email", "noi_dung", "ip", "trang_thai", "ghi_chu_shop", "cap_nhat"]),
     "dang_ky": ("Email đăng ký nhận tin", ["thoi_gian", "email", "ip"]),
 }
 TEN_COT = {"thoi_gian": "Thời gian", "ma_don": "Mã đơn", "ho_ten": "Họ tên", "dien_thoai": "Điện thoại", "dia_chi": "Địa chỉ",
            "san_pham": "Sản phẩm", "tong_tien": "Tổng tiền", "thanh_toan": "Thanh toán", "ghi_chu": "Ghi chú",
-           "email": "Email", "noi_dung": "Nội dung", "ip": "IP"}
+           "email": "Email", "noi_dung": "Nội dung", "ip": "IP", "trang_thai": "Trạng thái", "tong": "Tổng (số)",
+           "ghi_chu_shop": "Ghi chú cửa hàng", "ngay_giao": "Ngày giao", "cap_nhat": "Cập nhật lúc"}
+# Trạng thái đơn hàng / tư vấn (giá trị lưu -> chữ hiện)
+TT_DON = {"moi": "Mới", "xac_nhan": "Đã xác nhận", "dang_giao": "Đang giao", "da_giao": "Đã giao", "huy": "Đã hủy"}
+TT_TV = {"moi": "Mới", "da_lien_he": "Đã liên hệ", "xong": "Xong", "bo_qua": "Bỏ qua"}
 
 PHONE = re.compile(r"^(0|\+84)[0-9 .]{8,12}$")
 EMAIL = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
@@ -56,6 +61,16 @@ def ket_noi():
     con = sqlite3.connect(DB)
     for ten, (_, cot) in BANG.items():
         con.execute(f"CREATE TABLE IF NOT EXISTS {ten} (id INTEGER PRIMARY KEY, {', '.join(c + ' TEXT' for c in cot)})")
+        # Nâng cấp dữ liệu cũ: thêm cột mới nếu chưa có
+        co = {r[1] for r in con.execute(f"PRAGMA table_info({ten})")}
+        for c in cot:
+            if c not in co:
+                con.execute(f"ALTER TABLE {ten} ADD COLUMN {c} TEXT DEFAULT ''")
+    # Đơn cũ: lấy tổng tiền dạng số từ chữ "1.030.000₫", trạng thái mặc định là Mới
+    for rid, tt in con.execute("SELECT id, tong_tien FROM don_hang WHERE tong IS NULL OR tong = ''").fetchall():
+        con.execute("UPDATE don_hang SET tong = ? WHERE id = ?", (re.sub(r"[^0-9]", "", tt or "") or "0", rid))
+    con.execute("UPDATE don_hang SET trang_thai = 'moi' WHERE trang_thai IS NULL OR trang_thai = ''")
+    con.execute("UPDATE tu_van SET trang_thai = 'moi' WHERE trang_thai IS NULL OR trang_thai = ''")
     con.commit()
     return con
 
@@ -80,6 +95,13 @@ def doc(bang):
 def chu(v, dai):
     """Lấy chuỗi đã cắt khoảng trắng, giới hạn độ dài."""
     return str(v or "").strip()[:dai]
+
+
+def so_tien(n):
+    try:
+        return max(0, min(int(float(n)), 10_000_000_000))
+    except (TypeError, ValueError):
+        return 0
 
 
 def tien(n):
@@ -135,7 +157,8 @@ def xu_ly(duong_dan, d, ip):
         ten, sdt, nd = chu(d.get("name"), 100), chu(d.get("phone"), 20), chu(d.get("msg"), 2000)
         if not ten or not PHONE.match(sdt) or not nd:
             return 400, {"ok": False, "loi": "Thiếu họ tên, số điện thoại hoặc nội dung."}
-        luu("tu_van", {"thoi_gian": now, "ho_ten": ten, "dien_thoai": sdt, "email": chu(d.get("email"), 120), "noi_dung": nd, "ip": ip})
+        luu("tu_van", {"thoi_gian": now, "ho_ten": ten, "dien_thoai": sdt, "email": chu(d.get("email"), 120), "noi_dung": nd, "ip": ip,
+                       "trang_thai": "moi", "ghi_chu_shop": "", "cap_nhat": ""})
         bao_telegram(f"💬 YÊU CẦU TƯ VẤN MỚI\n👤 {ten}\n📞 {sdt}\n📝 {nd}{link_qt()}")
         return 200, {"ok": True}
     if duong_dan == "/api/dang-ky":
@@ -153,7 +176,8 @@ def xu_ly(duong_dan, d, ip):
         sp = "; ".join(f"{chu(i.get('name'), 100)} × {chu(i.get('q'), 4)} ({tien(i.get('price'))})" for i in items[:50] if isinstance(i, dict))
         ma = "VX" + datetime.now(VN).strftime("%d%H%M%S")
         luu("don_hang", {"thoi_gian": now, "ma_don": ma, "ho_ten": ten, "dien_thoai": sdt, "dia_chi": dc, "san_pham": sp,
-                         "tong_tien": tien(d.get("total")), "thanh_toan": chu(d.get("pay"), 60), "ghi_chu": chu(d.get("note"), 1000), "ip": ip})
+                         "tong_tien": tien(d.get("total")), "thanh_toan": chu(d.get("pay"), 60), "ghi_chu": chu(d.get("note"), 1000), "ip": ip,
+                         "trang_thai": "moi", "tong": str(so_tien(d.get("total"))), "ghi_chu_shop": "", "ngay_giao": "", "cap_nhat": ""})
         ghi = chu(d.get("note"), 1000)
         bao_telegram(f"🛒 ĐƠN HÀNG MỚI {ma}\n👤 {ten}\n📞 {sdt}\n🏠 {dc}\n🌿 Sản phẩm:\n   • {sp.replace('; ', chr(10) + '   • ')}\n💰 Tổng: {tien(d.get('total'))} ({chu(d.get('pay'), 60) or 'COD'})"
                      + (f"\n📝 {ghi}" if ghi else "") + link_qt())
@@ -455,7 +479,66 @@ def luu_danh_muc(d):
     return 200, {"ok": True, "slug": slug}
 
 
-QUAN_TRI_API = {"/quan-tri/api/du-an": luu_du_an, "/quan-tri/api/danh-muc": luu_danh_muc, "/quan-tri/api/san-pham": luu_san_pham, "/quan-tri/api/bai-viet": luu_bai_viet, "/quan-tri/api/anh": luu_anh}
+def doc_dict(bang):
+    cot = ["id"] + BANG[bang][1]
+    with LOCK:
+        con = ket_noi()
+        rows = con.execute(f"SELECT {', '.join(cot)} FROM {bang} ORDER BY id DESC").fetchall()
+        con.close()
+    return [dict(zip(cot, r)) for r in rows]
+
+
+def du_lieu_khach():
+    try:
+        ds = sorted(f for f in os.listdir(SAO_LUU_DIR) if re.fullmatch(r"vuonxanh-[0-9-]+\.tar\.gz", f))
+    except OSError:
+        ds = []
+    don = doc_dict("don_hang")
+    for x in don:
+        x.pop("ip", None)
+        x["tong"] = int(x.get("tong") or 0)
+    tv = doc_dict("tu_van")
+    for x in tv:
+        x.pop("ip", None)
+    dk = [{"id": x["id"], "thoi_gian": x["thoi_gian"], "email": x["email"]} for x in doc_dict("dang_ky")]
+    return {"don_hang": don, "tu_van": tv, "dang_ky": dk, "tt_don": TT_DON, "tt_tv": TT_TV,
+            "sao_luu": {"moi_nhat": ds[-1][9:-7] if ds else "", "so_ban": len(ds)}}
+
+
+def sua_don(d):
+    """Đổi trạng thái / ghi chú của đơn hàng hoặc yêu cầu tư vấn."""
+    bang = "tu_van" if d.get("loai") == "tu_van" else "don_hang"
+    i = so_id(d.get("id"), 10_000_000)
+    if i is None:
+        return 400, {"ok": False, "loi": "Mục không hợp lệ."}
+    hop_le = TT_TV if bang == "tu_van" else TT_DON
+    now = datetime.now(VN).strftime("%Y-%m-%d %H:%M")
+    with LOCK:
+        con = ket_noi()
+        cu = con.execute(f"SELECT trang_thai FROM {bang} WHERE id = ?", (i,)).fetchone()
+        if not cu:
+            con.close()
+            return 404, {"ok": False, "loi": "Không tìm thấy."}
+        if "trang_thai" in d:
+            tt = chu(d.get("trang_thai"), 20)
+            if tt not in hop_le:
+                con.close()
+                return 400, {"ok": False, "loi": "Trạng thái không hợp lệ."}
+            con.execute(f"UPDATE {bang} SET trang_thai = ?, cap_nhat = ? WHERE id = ?", (tt, now, i))
+            if bang == "don_hang":
+                # Ngày giao dùng để tính doanh thu theo tháng
+                if tt == "da_giao" and cu[0] != "da_giao":
+                    con.execute("UPDATE don_hang SET ngay_giao = ? WHERE id = ?", (now, i))
+                elif tt != "da_giao":
+                    con.execute("UPDATE don_hang SET ngay_giao = '' WHERE id = ?", (i,))
+        if "ghi_chu_shop" in d:
+            con.execute(f"UPDATE {bang} SET ghi_chu_shop = ?, cap_nhat = ? WHERE id = ?", (chu(d.get("ghi_chu_shop"), 2000), now, i))
+        con.commit()
+        con.close()
+    return 200, {"ok": True}
+
+
+QUAN_TRI_API = {"/quan-tri/api/sua-don": sua_don, "/quan-tri/api/du-an": luu_du_an, "/quan-tri/api/danh-muc": luu_danh_muc, "/quan-tri/api/san-pham": luu_san_pham, "/quan-tri/api/bai-viet": luu_bai_viet, "/quan-tri/api/anh": luu_anh}
 
 
 # =====================================================================
@@ -582,8 +665,14 @@ def file_csv(bang):
     buf = io.StringIO()
     buf.write("﻿")  # để Excel đọc đúng tiếng Việt
     w = csv.writer(buf)
-    w.writerow([TEN_COT[c] for c in cot])
-    w.writerows(doc(bang))
+    cot_hien = [c for c in cot if c != "ip"]
+    w.writerow([TEN_COT[c] for c in cot_hien])
+    tt = TT_TV if bang == "tu_van" else TT_DON
+    for r in doc(bang):
+        x = dict(zip(cot, r))
+        if "trang_thai" in x:
+            x["trang_thai"] = tt.get(x["trang_thai"], x["trang_thai"])
+        w.writerow([x.get(c, "") for c in cot_hien])
     return buf.getvalue().encode("utf-8")
 
 
@@ -642,6 +731,8 @@ class XuLy(BaseHTTPRequestHandler):
                 return self.gui(200, f.read(), "text/html; charset=utf-8")
         if p in ("/quan-tri/khach", "/quan-tri/khach/"):
             return self.gui(200, trang_quan_tri(), "text/html; charset=utf-8")
+        if p == "/quan-tri/api/khach":
+            return self.gui(200, du_lieu_khach())
         if p == "/quan-tri/sao-luu":
             try:
                 ds = sorted(f for f in os.listdir(SAO_LUU_DIR) if re.fullmatch(r"vuonxanh-[0-9-]+\.tar\.gz", f))

@@ -40,3 +40,10 @@ bash vuonxanh-web-main/cai-dat.sh tenmien.com
 ## SEO trong trang quản trị
 - Mỗi sản phẩm, danh mục, bài viết, dự án có khung **Tối ưu SEO**: từ khóa chính, tiêu đề SEO, mô tả SEO, chữ mô tả ảnh (alt), xem trước trên Google và điểm SEO (0–100) kèm từng tiêu chí
 - Máy chủ chèn tiêu đề, mô tả, og:image, canonical, JSON-LD (Product/Article) vào trang khi phục vụ, nên Google, Facebook, Zalo đều thấy nội dung mới. Trang đã xóa trả về 404
+
+## Quản lý đơn hàng & doanh thu (tab "Đơn hàng & khách")
+- Trạng thái đơn: Mới → Đã xác nhận → Đang giao → Đã giao / Đã hủy (nút bước tiếp trên mỗi đơn); ghi chú nội bộ; gọi / Zalo / sao chép thông tin giao hàng
+- Thẻ tổng quan (đơn mới, đang giao, đã giao tháng này, doanh thu tháng này so với tháng trước) và biểu đồ doanh thu 12 tháng – **chỉ tính đơn đã giao, theo ngày giao**
+- Lọc theo trạng thái / tháng, tìm theo mã đơn, tên, số điện thoại, sản phẩm; tải Excel (có cột trạng thái, ngày giao)
+- Yêu cầu tư vấn: Mới / Đã liên hệ / Xong / Bỏ qua + ghi chú. Email đăng ký: sao chép tất cả, tải Excel
+- CSDL cũ được tự nâng cấp (thêm cột trạng thái, tổng tiền dạng số…) khi chương trình khởi động
