@@ -202,6 +202,7 @@ def nd_doc():
     d.setdefault("bv", {})
     d.setdefault("dm", {})
     d.setdefault("da", {})
+    d.setdefault("cai_dat", {})
     return d
 
 
@@ -300,6 +301,7 @@ def nd_xuat_js(d=None):
   });
   window.DM_NHOM = N;
   if (D.hot) window.HOT_IDS = D.hot;
+  window.CAI_DAT = D.cai_dat || {};
 })();
 """ % du_lieu
     tam = ND_JS + ".tmp"
@@ -538,7 +540,14 @@ def sua_don(d):
     return 200, {"ok": True}
 
 
-QUAN_TRI_API = {"/quan-tri/api/sua-don": sua_don, "/quan-tri/api/du-an": luu_du_an, "/quan-tri/api/danh-muc": luu_danh_muc, "/quan-tri/api/san-pham": luu_san_pham, "/quan-tri/api/bai-viet": luu_bai_viet, "/quan-tri/api/anh": luu_anh}
+def luu_cai_dat(d):
+    nd = nd_doc()
+    nd["cai_dat"] = {"tet": bool(d.get("tet")), "thong_bao": e(d.get("thong_bao"), 160)}
+    nd_ghi(nd)
+    return 200, {"ok": True}
+
+
+QUAN_TRI_API = {"/quan-tri/api/cai-dat": luu_cai_dat, "/quan-tri/api/sua-don": sua_don, "/quan-tri/api/du-an": luu_du_an, "/quan-tri/api/danh-muc": luu_danh_muc, "/quan-tri/api/san-pham": luu_san_pham, "/quan-tri/api/bai-viet": luu_bai_viet, "/quan-tri/api/anh": luu_anh}
 
 
 # =====================================================================

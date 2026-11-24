@@ -10,7 +10,7 @@
   --bg: #faf8f3;
   --card: #ffffff;
   --photo: #f1efe9;      /* nền ảnh sản phẩm */
-  --clay: #c0633f;       /* nhãn giảm giá, "bán chạy" */
+  --clay: #a9502f;       /* nhãn giảm giá, "bán chạy" (đậm hơn để chữ trắng dễ đọc) */
   --footer: #1f3326;
   --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --display: "Lora", Georgia, "Times New Roman", serif;
@@ -126,6 +126,19 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 /* ===== HERO ===== */
 .hero { padding-block: 28px 8px; }
+
+/* ===== Giao diện Tết (bật/tắt trong trang quản trị, tab Giao diện) ===== */
+html.tet { --clay: #b3261e; --tet-vang: #f2c46d; }
+html.tet .announce { background: linear-gradient(90deg, #8e1a14, #b3261e 50%, #8e1a14); color: #ffe9b8; }
+html.tet .announce b { color: #fff3d6; }
+html.tet .hero-card { background: radial-gradient(circle at 92% 8%, rgba(242,196,109,.35), transparent 32%), linear-gradient(120deg, #fbefe2 0%, #f6ead8 55%, #eef2e6 100%); position: relative; }
+html.tet .hero-card::before { content: "🌸"; position: absolute; top: 16px; left: 22px; font-size: 26px; opacity: .85; }
+html.tet .hero-card::after { content: "🧧"; position: absolute; bottom: 14px; left: 46%; font-size: 26px; opacity: .9; }
+html.tet .hero-text h1 { color: #7d1d17; }
+html.tet .eyebrow { color: #b3261e; }
+html.tet .badge.hot { background: #b3261e; box-shadow: 0 0 0 2px var(--tet-vang) inset; }
+html.tet .btn-primary { box-shadow: 0 0 0 2px rgba(242,196,109,.0); }
+html.tet .footer { border-top: 4px solid var(--tet-vang); }
 .hero-card { background: linear-gradient(120deg, #e6efe1 0%, #f3efe5 100%); border-radius: 24px; display: grid; grid-template-columns: 1.05fr 1fr; align-items: center; overflow: hidden; min-height: 400px; }
 .hero-text { padding: 48px 0 48px 56px; }
 .hero-text h1 { font-family: var(--display); font-weight: 600; font-size: clamp(30px, 4.2vw, 52px); line-height: 1.1; letter-spacing: -.8px; color: var(--green-dark); text-wrap: balance; }
@@ -502,6 +515,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   .filters.open { display: flex; }
   .pd, .content-wrap, .two-col, .cart-wrap, .policy-wrap { grid-template-columns: 1fr; gap: 28px; }
   .content-wrap > aside { position: static; }
+  html.tet .hero-card::before { top: 10px; left: auto; right: 14px; font-size: 20px; }
+  html.tet .hero-card::after { display: none; }
   .gallery, .side-card, .summary, .policy-menu { position: static; }
   .policy-menu { display: flex; overflow-x: auto; gap: 6px; }
   .policy-menu a { white-space: nowrap; border: 1px solid var(--line); border-radius: 999px; }

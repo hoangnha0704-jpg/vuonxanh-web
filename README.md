@@ -47,3 +47,7 @@ bash vuonxanh-web-main/cai-dat.sh tenmien.com
 - Lọc theo trạng thái / tháng, tìm theo mã đơn, tên, số điện thoại, sản phẩm; tải Excel (có cột trạng thái, ngày giao)
 - Yêu cầu tư vấn: Mới / Đã liên hệ / Xong / Bỏ qua + ghi chú. Email đăng ký: sao chép tất cả, tải Excel
 - CSDL cũ được tự nâng cấp (thêm cột trạng thái, tổng tiền dạng số…) khi chương trình khởi động
+
+## Giao diện (tab "Giao diện" trong quản trị)
+- Sửa dòng thông báo đầu trang (khuyến mãi, phí giao, nghỉ lễ)
+- Bật/tắt giao diện Tết: điểm nhấn đỏ son – vàng đồng, hoa mai/lì xì ở banner

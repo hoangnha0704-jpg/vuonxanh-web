@@ -154,7 +154,7 @@
 <body>
 <header>
   <div class="top"><b>🌿 Vườn Xanh · Quản trị</b><a href="/" target="_blank">Xem trang web ↗</a></div>
-  <nav class="tabs"><a href="#san-pham" data-tab="san-pham">Sản phẩm</a><a href="#danh-muc" data-tab="danh-muc">Danh mục</a><a href="#bai-viet" data-tab="bai-viet">Bài viết tin tức</a><a href="#du-an" data-tab="du-an">Dự án</a><a href="#khach" data-tab="khach">Đơn hàng & khách <span id="badgeDon"></span></a></nav>
+  <nav class="tabs"><a href="#san-pham" data-tab="san-pham">Sản phẩm</a><a href="#danh-muc" data-tab="danh-muc">Danh mục</a><a href="#bai-viet" data-tab="bai-viet">Bài viết tin tức</a><a href="#du-an" data-tab="du-an">Dự án</a><a href="#giao-dien" data-tab="giao-dien">Giao diện</a><a href="#khach" data-tab="khach">Đơn hàng & khách <span id="badgeDon"></span></a></nav>
 </header>
 <main id="main"><div class="empty">Đang tải…</div></main>
 
@@ -639,11 +639,43 @@ document.addEventListener("input", (e) => {
   if (e.target.id === "timDon") { LOC.q = e.target.value; const pos = e.target.selectionStart; trangKhach(); const i = $("timDon"); if (i) { i.focus(); i.setSelectionRange(pos, pos); } }
 });
 
+// ---------------------------------------------------------------- GIAO DIỆN
+const TB_MAC_DINH = "🚚 Giao nhanh trong ngày nội thành · Miễn phí đơn từ 500.000₫";
+function trangGiaoDien() {
+  const c = window.CAI_DAT || {};
+  return `<div class="help">Thay đổi ở đây áp dụng ngay cho toàn bộ trang web sau khi bấm <b>Lưu</b>.</div>
+  <form class="ed" id="gdForm" style="background:#fff;border:1px solid var(--line);border-radius:16px;max-width:760px">
+    <label class="f">Dòng thông báo đầu trang <small>Dải chữ nhỏ trên cùng của web – dùng cho khuyến mãi, phí giao hàng, lịch nghỉ lễ… Để trống = dùng câu mặc định.</small>
+      <input id="gdTB" maxlength="160" placeholder="${esc(TB_MAC_DINH)}" value="${esc(unesc(c.thong_bao || ""))}"></label>
+    <div class="gdxem" id="gdXem" style="border-radius:10px;padding:8px 14px;font-size:13px;text-align:center"></div>
+    <div class="checks" style="flex-direction:column;gap:6px"><label style="font-weight:600"><input type="checkbox" id="gdTet"${c.tet ? " checked" : ""}> Bật giao diện Tết 🧧</label>
+      <small style="color:var(--muted);margin-left:26px">Điểm nhấn đỏ son – vàng đồng, hoa mai/bao lì xì ở banner, nhãn “Bán chạy” màu đỏ. Nên bật từ khoảng giữa tháng 12 âm lịch đến hết rằm tháng Giêng, rồi tắt để về giao diện xanh thường ngày.</small></div>
+    <p class="msg" id="edMsg"></p>
+    <div class="actions"><span></span><div><a class="btn ghost" href="/" target="_blank">Xem trang web ↗</a><button class="btn" type="submit" id="edLuu">Lưu</button></div></div>
+  </form>`;
+}
+function xemGD() {
+  if (!$("gdXem")) return;
+  const tet = $("gdTet").checked;
+  $("gdXem").textContent = $("gdTB").value.trim() || TB_MAC_DINH;
+  $("gdXem").style.background = tet ? "linear-gradient(90deg,#8e1a14,#b3261e 50%,#8e1a14)" : "#234f34";
+  $("gdXem").style.color = tet ? "#ffe9b8" : "#e3efe0";
+}
+document.addEventListener("input", (e) => { if (e.target.closest && e.target.closest("#gdForm")) xemGD(); });
+document.addEventListener("change", (e) => { if (e.target.closest && e.target.closest("#gdForm")) xemGD(); });
+document.addEventListener("submit", async (e) => {
+  if (e.target.id !== "gdForm") return;
+  e.preventDefault();
+  try { await gui("/quan-tri/api/cai-dat", { tet: $("gdTet").checked, thong_bao: $("gdTB").value }); xong("Đã lưu giao diện"); }
+  catch (err) { $("edMsg").textContent = err.message; }
+});
+
 // ---------------------------------------------------------------- KHUNG CHUNG
 function ve() {
   const tab = (location.hash.slice(1) || "san-pham");
   document.querySelectorAll("[data-tab]").forEach((a) => a.classList.toggle("on", a.dataset.tab === tab));
   if (tab === "khach") return trangKhach();
+  if (tab === "giao-dien") { $("main").innerHTML = trangGiaoDien(); xemGD(); return; }
   $("main").innerHTML = tab === "bai-viet" ? trangBaiViet() : tab === "danh-muc" ? trangDanhMuc() : tab === "du-an" ? trangDuAn() : trangSanPham();
 }
 addEventListener("hashchange", () => { tim = ""; if ($("dlg").open) $("dlg").close(); ve(); });
@@ -714,7 +746,7 @@ function xong(tb) { sessionStorage.setItem("vx-toast", tb); location.reload(); }
   await napScript("/data.js?t=" + t);
   await napScript("/noi-dung.js?t=" + t);
   if (typeof PRODUCTS === "undefined") { $("main").innerHTML = `<div class="empty">Không tải được dữ liệu trang web.</div>`; return; }
-  ve();
+  ve(); xemGD();
   if (!KH) taiKhach().catch(() => {});
   const tb = sessionStorage.getItem("vx-toast"); if (tb) { sessionStorage.removeItem("vx-toast"); toast(tb); }
 })();

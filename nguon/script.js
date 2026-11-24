@@ -11,6 +11,10 @@ const cap = (s) => String(s || "").replace(/^(\s*)(\p{Ll})/u, (m, a, b) => a + b
 PRODUCTS.forEach((p) => { if (p && p.name) p.name = tc(p.name); });
 // Giải mã ký tự HTML (&amp; …) cho thẻ <title> và mô tả
 const un = (s) => { const t = document.createElement("textarea"); t.innerHTML = String(s || ""); return t.value; };
+// Cài đặt giao diện từ trang quản trị: giao diện Tết, dòng thông báo đầu trang
+const CAI = window.CAI_DAT || {};
+if (CAI.tet) document.documentElement.classList.add("tet");
+if (CAI.thong_bao) { const tb = document.querySelector(".announce-inner span"); if (tb) tb.textContent = un(CAI.thong_bao); }
 const catName = (s) => (s === "dich-vu" ? "Dịch vụ chăm sóc cây" : CATEGORIES[s].name);
 const catHref = (s) => (s === "dich-vu" ? "#dich-vu-cham-soc" : `#danh-muc-${s}`);
 const prodHref = (p) => `#san-pham-${p.id}`;
