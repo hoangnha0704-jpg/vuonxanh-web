@@ -380,6 +380,7 @@ html.tet .footer { border-top: 4px solid var(--tet-vang); }
 .note-box { background: var(--green-soft); border-radius: var(--radius); padding: 16px 20px; margin: 20px 0; font-size: 15px; }
 .hint { font-size: 13px; color: var(--muted); font-style: italic; }
 .content-wrap { display: grid; grid-template-columns: 1fr 300px; gap: 48px; padding-block: 20px 50px; align-items: start; }
+.content-wrap > * { min-width: 0; }   /* bảng rộng không làm tràn trang trên điện thoại */
 .content-wrap > aside { position: sticky; top: 140px; }  /* cả cột phải trượt cùng nhau, không che nhau */
 .side-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
 .side-card h4 { font-size: 15px; margin-bottom: 12px; }

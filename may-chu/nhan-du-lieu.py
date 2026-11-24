@@ -603,7 +603,7 @@ def trang_seo(duong):
         ten, mo_ta, anh = U(r.get("name", "")), U(f"{r.get('name', '')} giá {tien(r.get('price'))}. {r.get('short', '')}"), r.get("img", "")
     else:
         ten, mo_ta, anh = U(r.get("t", "")), U(r.get("p", "")), r.get("img", "")
-    tieu_de = U(r.get("seoTitle") or "") or f"{ten} – {ten_shop}"
+    tieu_de = U(r.get("seoTitle") or "") or (f"{ten}: mẫu đẹp, giá tốt – {ten_shop}" if dm else f"{ten} – {ten_shop}")
     mo_ta = (U(r.get("seoDesc") or "") or mo_ta)[:300]
     url = f"{goc}/{route}/"
     h = re.sub(r"<title>[\s\S]*?</title>", lambda _: f"<title>{html.escape(tieu_de)}</title>", h, count=1)

@@ -409,7 +409,7 @@ const chuan = (t) => unesc(t).normalize("NFC").toLowerCase().replace(/\s+/g, " "
 const soTu = (t) => (unesc(t).replace(/<[^>]+>/g, " ").match(/\S+/g) || []).length;
 const NGUONG_CHU = { sp: [40, 15], bv: [300, 150], da: [150, 70], dm: [30, 12] };   // [tốt, tạm] số chữ
 const TEN_LOAI = { sp: "mô tả sản phẩm", bv: "bài viết", da: "nội dung dự án", dm: "giới thiệu danh mục" };
-function tieuDeHieuLuc(o) { return o.seoTitle ? unesc(o.seoTitle) : `${unesc(o.ten)} – ${SHOP.name}`; }
+function tieuDeHieuLuc(o) { return o.seoTitle ? unesc(o.seoTitle) : o.loai === "dm" ? `${unesc(o.ten)}: mẫu đẹp, giá tốt – ${SHOP.name}` : `${unesc(o.ten)} – ${SHOP.name}`; }
 function cham(o) {
   const ds = [], kw = chuan(o.kw || ""), td = tieuDeHieuLuc(o), mt = unesc(o.seoDesc || o.moTaTuDong || "");
   const add = (muc, t) => ds.push([muc, t]);

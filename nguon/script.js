@@ -214,7 +214,7 @@ function shopPage(cat) {
   shop = { cat, price: new Set(), light: new Set(), sort: "hot" };
   const c = cat ? CATEGORIES[cat] : { name: "Tất cả cây cảnh", intro: "Cây cảnh nội thất, văn phòng, phong thủy và phụ kiện – lọc theo giá và ánh sáng để tìm cây hợp với bạn." };
   const crumbs = cat ? [["Sản phẩm", "#san-pham"]] : [];
-  return { title: c.name, seoTitle: c.seoTitle, desc: c.seoDesc || `${c.name} tại ${SHOP.name}: ${c.intro}`, html: head(c.name, crumbs, c.intro) + `
+  return { title: c.name, seoTitle: c.seoTitle || (cat ? `${c.name}: mẫu đẹp, giá tốt – ${SHOP.name}` : ""), desc: c.seoDesc || `${c.name} tại ${SHOP.name}: ${c.intro}`, html: head(c.name, crumbs, c.intro) + `
   <div class="container shop">
     <aside class="filters" id="filters">
       <div class="f-group"><h5>Danh mục</h5><div class="f-cats">
@@ -514,8 +514,24 @@ function prettyLinks(root) {
     if (r) a.setAttribute("href", r === "trang-chu" ? "/" : `/${r}/`);
   });
 }
-function setMeta(page) {
-  const desc = un(page.desc || `${SHOP.name} – cây cảnh trong nhà, cây văn phòng, cây phong thủy. Giao nhanh, bảo hành 14 ngày, tư vấn chăm sóc trọn đời.`).replace(/<[^>]+>/g, "").slice(0, 160);
+// Mô tả riêng cho các trang không có mô tả trong dữ liệu (tránh nhiều trang trùng mô tả)
+const MO_TA = {
+  "gioi-thieu": () => `${SHOP.name} – vườn cây cảnh tại ${SHOP.address}: cây thuần tại vườn, giao tận nơi, bảo hành 14 ngày, hướng dẫn chăm sóc trọn đời.`,
+  "lien-he": () => `Liên hệ ${SHOP.name}: hotline ${SHOP.hotline}, email ${SHOP.email}, địa chỉ ${SHOP.address}. Tư vấn chọn cây miễn phí ${SHOP.hours}.`,
+  "ban-do": () => `Bản đồ đường đến cửa hàng cây cảnh ${SHOP.name} tại ${SHOP.address}. Mở cửa ${SHOP.hours}, gọi ${SHOP.hotline} trước khi đến.`,
+  "tin-tuc": () => `Tin tức và mẹo chọn, chăm sóc cây cảnh trong nhà, văn phòng, phong thủy từ ${SHOP.name}: cách tưới, ánh sáng, chọn cây theo không gian.`,
+  "du-an": () => `Các dự án cây xanh ${SHOP.name} đã thi công: biệt thự, văn phòng, quán cà phê, chung cư, nhà hàng – xem ảnh thực tế và giải pháp.`,
+  "cham-soc": () => `Hướng dẫn chăm sóc cây cảnh văn phòng, cây thủy sinh, sen đá và xương rồng: tưới nước, ánh sáng, đất, phân bón – từ ${SHOP.name}.`,
+  "dich-vu-cham-soc": () => `Dịch vụ chăm sóc cây cảnh định kỳ cho văn phòng, nhà ở: tưới, bón phân, cắt tỉa, thay cây hỏng. Bảng giá theo số lượng cây – gọi ${SHOP.hotline}.`,
+  "so-do-trang": () => `Sơ đồ trang ${SHOP.name}: tất cả danh mục cây cảnh, sản phẩm, hướng dẫn chăm sóc, chính sách và bài viết.`,
+  "tim-kiem": () => `Tìm cây cảnh theo tên tại ${SHOP.name}: kim tiền, lưỡi hổ, trầu bà, bàng Singapore, sen đá…`,
+  "mua-hang": () => `Giỏ hàng của bạn tại ${SHOP.name}.`,
+  "thanh-toan": () => `Đặt hàng và thanh toán khi nhận hàng tại ${SHOP.name}.`,
+};
+function setMeta(page, route) {
+  const tuDong = MO_TA[route] ? MO_TA[route]() : POLICIES[route] ? `${POLICIES[route].name} của ${SHOP.name}: ${String((POLICIES[route].s[0] || [])[1] || "").replace(/<[^>]+>/g, "")}` :
+    CARE[route] ? `${CARE[route].name}: ${CARE[route].intro}` : "";
+  const desc = un(page.desc || tuDong || `${SHOP.name} – cây cảnh trong nhà, cây văn phòng, cây phong thủy. Giao nhanh, bảo hành 14 ngày, tư vấn chăm sóc trọn đời.`).replace(/<[^>]+>/g, "").slice(0, 160);
   let m = document.querySelector('meta[name="description"]');
   if (!m) { m = document.createElement("meta"); m.name = "description"; document.head.appendChild(m); }
   m.content = desc;
@@ -531,7 +547,7 @@ function render() {
     { title: "Không tìm thấy trang", html: head("Không tìm thấy trang") + `<div class="container"><div class="empty"><b>Trang này không tồn tại</b><a href="#trang-chu" class="link-arrow">Về trang chủ</a></div></div>` };
   $("app").innerHTML = page.html;
   if (page.after) page.after();
-  setMeta(page);
+  setMeta(page, route);
   if (PRETTY) prettyLinks(document);
   document.title = page.seoTitle ? un(page.seoTitle) : page.title ? un(`${page.title} – ${SHOP.name}`) : `${SHOP.name} – Cây cảnh trong nhà & văn phòng`;
   scrollTo({ top: 0 });
