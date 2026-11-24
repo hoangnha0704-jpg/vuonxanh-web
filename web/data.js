@@ -8,7 +8,7 @@ const SHOP = {
   hotline: "0987.123.456",
   email: "hoangnha0704@gmail.com",
   address: "Thái Bình",
-  hours: "8h sáng đến 20h tất cả các ngày trong tuần",
+  hours: "8h sáng - 20h tối",
 };
 
 // ---------- DANH MỤC ----------
@@ -49,7 +49,7 @@ const A = (kind, bg, pot, leaf, leaf2, flower) => ({ kind, bg, pot, leaf, leaf2,
 const PRODUCTS = [
   { name: "Cây Nam Thiên Trúc", price: 799000, cats: ["phong-thuy", "loai-to", "cong-trinh"], size: "cao khoảng 100cm", light: "nắng nhẹ đến nắng trực tiếp", art: A("fern", "#f4f4f2", "#e9e4da", "#6aa335", "#9cc75a"), short: "Lá đổi màu theo mùa, cuối năm cho chùm quả đỏ rực. Cây mang ý nghĩa may mắn, bình an, hợp sân vườn, ban công và tiểu cảnh kiểu Nhật." },
   { name: "Cây Trúc Bách Hợp", price: 599000, cats: ["phong-thuy", "van-phong"], size: "cao 80–100cm", light: "ánh sáng tán xạ", art: A("tall", "#f2f4f0", "#ffffff", "#3c7a32", "#c9d86a"), short: "Lá dài viền vàng xếp tầng, dáng thanh lịch, hợp đặt góc phòng khách và văn phòng." },
-  { name: "Cây hoa tường vi", price: 350000, cats: ["phong-thuy", "cong-trinh"], size: "cao 120–150cm", light: "nắng trực tiếp", art: A("flower", "#f6f0f2", "#c98d5f", "#3a7a32", "#5b9b44", "#e66a9a"), short: "Hoa nở thành chùm màu hồng tím suốt mùa hè, hợp trồng trước cổng và sân vườn." },
+  { name: "Cây Hoa Tường Vi", price: 350000, cats: ["phong-thuy", "cong-trinh"], size: "cao 120–150cm", light: "nắng trực tiếp", art: A("flower", "#f6f0f2", "#c98d5f", "#3a7a32", "#5b9b44", "#e66a9a"), short: "Hoa nở thành chùm màu hồng tím suốt mùa hè, hợp trồng trước cổng và sân vườn." },
   { name: "Cây Hoa Giấy", price: 250000, cats: ["cong-trinh", "day-leo"], size: "cao 80–120cm", light: "nắng trực tiếp", art: A("flower", "#f7eef3", "#8a5a3c", "#2f7d2e", "#4f9c3c", "#c42b7f"), short: "Ra hoa quanh năm, chịu nắng chịu hạn tốt, rất hợp ban công hướng Tây." },
   { name: "Cây Huyết Dụ", price: 149000, cats: ["phong-thuy", "trong-nha"], size: "cao 60–80cm", light: "ánh sáng tán xạ", art: A("tall", "#f5efee", "#f1ede4", "#8c2a3c", "#c2455a"), short: "Lá màu đỏ tía nổi bật, theo dân gian giúp xua đuổi điều xấu, mang lại bình an." },
   { name: "Cây Cau Nga Mi", price: 650000, cats: ["loai-to", "cong-trinh"], size: "cao 150–180cm", light: "nắng nhẹ", art: A("fern", "#f0f3ee", "#ffffff", "#3b7a32", "#5d9b45"), short: "Dáng cau thanh mảnh, lá xòe mềm, tạo cảm giác nhiệt đới cho sảnh và sân vườn." },

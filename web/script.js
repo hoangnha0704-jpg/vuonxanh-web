@@ -5,6 +5,10 @@
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => n.toLocaleString("vi-VN") + "₫";
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// Viết hoa chữ cái đầu mỗi từ (tên sản phẩm, menu) / chữ đầu câu (thông số)
+const tc = (s) => String(s || "").replace(/(^|[\s(])(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase());
+const cap = (s) => String(s || "").replace(/^(\s*)(\p{Ll})/u, (m, a, b) => a + b.toUpperCase());
+PRODUCTS.forEach((p) => { if (p && p.name) p.name = tc(p.name); });
 const catName = (s) => (s === "dich-vu" ? "Dịch vụ chăm sóc cây" : CATEGORIES[s].name);
 const catHref = (s) => (s === "dich-vu" ? "#dich-vu-cham-soc" : `#danh-muc-${s}`);
 const prodHref = (p) => `#san-pham-${p.id}`;
@@ -41,7 +45,7 @@ function card(p) {
     <div class="card-body">
       <span class="card-cat">${CATEGORIES[p.cats[0]].name}</span>
       <a href="${prodHref(p)}" class="card-name">${p.name}</a>
-      <span class="card-meta">${p.size}${p.light ? " · " + p.light : ""}</span>
+      <span class="card-meta">${cap(p.size)}${p.light ? " · " + cap(p.light) : ""}</span>
       <span class="card-price">${fmt(p.price)}</span>
     </div>
   </article>`;
@@ -52,6 +56,9 @@ const postCard = (x, href) => `<article class="post-card">
   ${x.d ? `<time>${x.d}</time>` : ""}<a href="${href}"><h3>${x.t}</h3></a><p>${x.p}</p></article>`;
 const mini = (p) => `<a href="${prodHref(p)}" class="mini-item"><span class="mini-img">${photo(p.art)}</span><span><b>${p.name}</b><span>${fmt(p.price)}</span></span></a>`;
 const faq = (list) => `<div class="faq">${list.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join("")}</div>`;
+// Mục lục chỉ hiện khi bài dài (từ 4 mục và hơn ~1.500 chữ), bài ngắn đọc thẳng xuống là đủ
+const toc = (list, tieuDe) => (list.length >= 4 && list.reduce((n, [h, p]) => n + String(h).length + String(p).length, 0) > 1500
+  ? `<div class="toc"><b>${tieuDe}</b><ol>${list.map(([h]) => `<li>${h}</li>`).join("")}</ol></div>` : "");
 const sections = (list) => list.map(([h, p]) => `<h2>${h}</h2><p>${p}</p>`).join("");
 const head = (title, crumbs = [], lead = "") => `<div class="container page-head">
   <nav class="crumbs" aria-label="Đường dẫn"><a href="#trang-chu">Trang chủ</a>${crumbs.map(([t, h]) => `<span>/</span><a href="${h}">${t}</a>`).join("")}<span>/</span><span>${title}</span></nav>
@@ -81,7 +88,7 @@ $("megaMenu").innerHTML = `
   <div><h5>Nổi bật tuần này</h5><a href="${prodHref(pick(21))}" class="mega-feature"><span class="mf-img">${photo(pick(21).art, "#e8efe3")}</span>
     <div><b>${pick(21).name}</b><span>${fmt(pick(21).price)}</span></div></a>
     <p style="margin-top:12px"><a href="#san-pham" class="link-arrow">Xem tất cả ${SHOWN().length} sản phẩm</a></p></div>`;
-$("careMenu").innerHTML = Object.entries(CARE).map(([k, c]) => `<a href="#${k}">${c.name.replace("Cách chăm sóc ", "")}</a>`).join("") + `<a href="#dich-vu-cham-soc">Dịch vụ chăm sóc định kỳ</a>`;
+$("careMenu").innerHTML = Object.entries(CARE).map(([k, c]) => `<a href="#${k}">${tc(c.name.replace("Cách chăm sóc ", ""))}</a>`).join("") + `<a href="#dich-vu-cham-soc">Dịch Vụ Chăm Sóc Định Kỳ</a>`;
 $("fCats").innerHTML = ["kim-tien", "van-phong", "de-ban", "phong-thuy", "loai-to", "sen-da"].map((s) => `<li><a href="${catHref(s)}">${catName(s)}</a></li>`).join("");
 $("fHelp").innerHTML = [["#huong-dan-mua-hang", "Hướng dẫn mua hàng"], ["#giao-hang", "Giao hàng"], ["#bao-hanh", "Bảo hành"], ["#doi-tra", "Đổi trả"], ["#cham-soc", "Cách chăm sóc cây"], ["#chinh-sach-chung", "Chính sách chung"], ["#gioi-thieu", "Giới thiệu"], ["#ban-do", "Bản đồ cửa hàng"], ["#lien-he", "Liên hệ"]]
   .map(([h, t]) => `<li><a href="${h}">${t}</a></li>`).join("");
@@ -277,8 +284,8 @@ function productPage(p) {
       ${kemTheo(p) ? `<p class="pd-kem"><b>Giao kèm:</b> ${kemTheo(p)}</p>` : ""}
       <p class="pd-desc">${p.short}</p>
       <div class="specs">
-        <div class="spec"><small>Kích thước</small><b>${p.size}</b></div>
-        ${plant ? `<div class="spec"><small>Ánh sáng</small><b>${p.light}</b></div><div class="spec"><small>Độ khó</small><b>Dễ chăm</b></div>` : `<div class="spec"><small>Tình trạng</small><b>Mới 100%</b></div>`}
+        <div class="spec"><small>Kích thước</small><b>${cap(p.size)}</b></div>
+        ${plant ? `<div class="spec"><small>Ánh sáng</small><b>${cap(p.light)}</b></div><div class="spec"><small>Độ khó</small><b>Dễ chăm</b></div>` : `<div class="spec"><small>Tình trạng</small><b>Mới 100%</b></div>`}
       </div>
       ${potBox(p)}
       <div class="pd-total" id="pdTotal" data-id="${p.id}">Tạm tính: <b>${fmt(p.price)}</b></div>
@@ -319,13 +326,15 @@ function productPage(p) {
 // ---------------------------------------------------------------------
 // CÁC TRANG NỘI DUNG
 // ---------------------------------------------------------------------
+// Ảnh lớn đầu bài: ảnh vuông/dọc hiện trọn ảnh trên nền chính ảnh đó làm mờ, không bị cắt
+const leadImg = (a, bg) => (a.img ? `<div class="lead-img fit"><img class="blur" src="${a.img}" alt="" aria-hidden="true"><img class="main" src="${a.img}" alt="${esc(a.alt || "")}" loading="lazy"></div>` : `<div class="lead-img">${photo(a, bg)}</div>`);
 const withSide = (inner) => `<div class="container content-wrap"><div class="prose">${inner}</div>${sideCard()}</div>`;
 const PAGES = {
   "trang-chu": () => ({ title: "", html: homePage() }),
   "san-pham": () => shopPage(""),
 
   "gioi-thieu": () => ({ title: "Giới thiệu", html: head("Giới thiệu", [], `${SHOP.name} – mang không gian xanh đến mọi nhà.`) + withSide(`
-    <div class="lead-img">${photo(ANH(21), "#e3ebdd")}</div>
+    <div class="lead-img collage">${[21, 11, 6].map((i) => photo(pick(i).art)).join("")}</div>
     <p>${SHOP.name} ra đời với mong muốn mang cây xanh vào từng căn nhà, văn phòng, đồng thời chia sẻ kinh nghiệm chăm sóc để cây sống khỏe lâu dài. Mua cây ở đây, bạn còn được hướng dẫn cách chăm và cách xử lý khi cây gặp vấn đề.</p>
     <p>Cây được bảo hành từ 7 đến 30 ngày tùy kích thước. Kể cả khi bạn mua cây ở nơi khác, chúng tôi vẫn sẵn sàng tư vấn miễn phí.</p>
     <h2>Vì sao chọn ${SHOP.name}?</h2>
@@ -355,7 +364,7 @@ const PAGES = {
     <h2>Bảng giá tham khảo</h2>
     <div class="table-wrap"><table class="table"><thead><tr><th>Số lượng cây</th><th>Số lần chăm</th><th>Giá / tháng</th></tr></thead>
       <tbody>${SERVICE.table.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td><b>${r[2]}</b></td></tr>`).join("")}</tbody></table></div>
-    <p class="hint">Giá tham khảo – sửa trong file data.js.</p>
+    <p class="hint">Giá tham khảo, có thể thay đổi theo loại cây và vị trí đặt. Gọi ${SHOP.hotline} để nhận báo giá chính xác.</p>
     <h2>Câu hỏi thường gặp</h2>${faq(SERVICE.faq)}
     <div class="note-box">Cần báo giá chính xác? Gọi <b>${SHOP.hotline}</b> hoặc <a href="#lien-he">gửi yêu cầu</a>.</div>`) }),
 
@@ -400,7 +409,7 @@ const PAGES = {
     <div class="container cart-wrap">
       <div class="cart-list">${list.map(({ p, q }) => `<div class="cart-item">
         <a href="${prodHref(p)}" class="mini-img">${photo(p.art)}</a>
-        <div><a href="${prodHref(p)}"><b>${p.name}</b></a><span class="unit">${fmt(p.price)} · ${p.size}</span></div>
+        <div><a href="${prodHref(p)}"><b>${p.name}</b></a><span class="unit">${fmt(p.price)} · ${cap(p.size)}</span></div>
         <div class="right"><span class="line-total">${fmt(p.price * q)}</span>
           <div class="stepper sm"><button data-cart="-1" data-id="${p.id}" aria-label="Giảm">−</button><span>${q}</span><button data-cart="1" data-id="${p.id}" aria-label="Tăng">+</button></div>
           <button class="remove" data-cart="rm" data-id="${p.id}">Xóa</button></div></div>`).join("")}</div>
@@ -451,8 +460,8 @@ const PAGES = {
 };
 
 Object.entries(CARE).forEach(([k, c]) => (PAGES[k] = () => ({ title: c.name, html: head(c.name, [["Cách chăm sóc", "#cham-soc"]]) + withSide(`
-  <div class="lead-img">${photo(c.art, "#e6eee2")}</div><p>${c.intro}</p>
-  <div class="toc"><b>Nội dung</b><ol>${c.s.map(([h]) => `<li>${h}</li>`).join("")}</ol></div>${sections(c.s)}`) + moreProducts("Cây dễ chăm cho người mới") })));
+  ${leadImg(c.art, "#e6eee2")}<p>${c.intro}</p>
+  ${toc(c.s, "Nội dung")}${sections(c.s)}`) + moreProducts("Cây dễ chăm cho người mới") })));
 
 Object.entries(POLICIES).forEach(([k, v]) => (PAGES[k] = () => ({ title: v.name, html: head(v.name, [["Chính sách", "#chinh-sach-chung"]]) + `
   <div class="container policy-wrap"><nav class="policy-menu">${Object.entries(POLICIES).map(([kk, vv]) => `<a href="#${kk}" class="${kk === k ? "on" : ""}">${vv.name}</a>`).join("")}</nav>
@@ -465,8 +474,8 @@ function dynamicPage(route) {
   if ((m = route.match(/^bai-viet-(\d+)$/)) && POSTS[m[1]] && !POSTS[m[1]].an) {
     const i = +m[1], x = POSTS[i];
     return { title: x.t, desc: x.p, html: head(x.t, [["Tin tức", "#tin-tuc"]]) + withSide(`
-      <p class="meta">${x.d} · ${SHOP.name}</p><div class="lead-img">${photo(x.art, x.art.bg)}</div>
-      <p><b>${x.p}</b></p><div class="toc"><b>Nội dung bài viết</b><ol>${x.s.map(([h]) => `<li>${h}</li>`).join("")}</ol></div>${sections(x.s)}
+      <p class="meta">${x.d} · ${SHOP.name}</p>${leadImg(x.art, x.art.bg)}
+      <p><b>${x.p}</b></p>${toc(x.s, "Nội dung bài viết")}${sections(x.s)}
       <div class="note-box">Cần tư vấn chọn cây? Gọi <b>${SHOP.hotline}</b> hoặc xem <a href="#danh-muc-trong-nha">cây cảnh trong nhà</a>.</div>`) +
       `<section class="section tight"><div class="container"><div class="sec-head"><h2 class="h2">Bài viết liên quan</h2></div><div class="posts">${POST_IDX().filter(([, k]) => k !== i).slice(0, 3).map(([p, k]) => postCard(p, `#bai-viet-${k}`)).join("")}</div></div></section>` };
   }
@@ -478,7 +487,7 @@ function dynamicPage(route) {
       <h2>Kết quả</h2><p>Không gian thoáng đãng hơn, khách hàng ký tiếp gói chăm sóc định kỳ.</p>`;
     const anh = (x.gal || []).map((u) => `<button class="gal-item" data-zoom="${u}" aria-label="Phóng to ảnh"><img src="${u}" alt="" loading="lazy"></button>`).join("");
     return { title: x.t, desc: x.p, html: head(x.t, [["Dự án", "#du-an"]]) + withSide(`
-      ${x.loc ? `<p class="meta">📍 ${x.loc}</p>` : ""}<div class="lead-img">${photo(x.art, x.art.bg)}</div><p>${x.p.replace(/…$/, ".")}</p>
+      ${x.loc ? `<p class="meta">📍 ${x.loc}</p>` : ""}${leadImg(x.art, x.art.bg)}<p>${x.p.replace(/…$/, ".")}</p>
       ${noiDung}${x.plants ? `<h2>Cây sử dụng</h2><p>${x.plants}.</p>` : ""}
       ${anh ? `<h2>Hình ảnh công trình</h2><div class="gallery-grid">${anh}</div>` : ""}
       <div class="note-box">Muốn làm công trình tương tự? Gọi <b>${SHOP.hotline}</b> hoặc <a href="#lien-he">gửi yêu cầu tư vấn</a>.</div>`) +
