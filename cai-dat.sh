@@ -64,6 +64,35 @@ echo "Tên đăng nhập: $U"
 echo "Mật khẩu:      $P"
 TK
 chmod 755 /usr/local/bin/vx-tai-khoan
+
+# Telegram (báo đơn), sao lưu, khôi phục
+install -m 755 "$HERE/may-chu/vx-telegram.py" /usr/local/bin/vx-telegram
+install -m 755 "$HERE/may-chu/vx-sao-luu.sh" /usr/local/bin/vx-sao-luu
+install -m 755 "$HERE/may-chu/vx-khoi-phuc.sh" /usr/local/bin/vx-khoi-phuc
+mkdir -p /var/backups/vuonxanh; chown root:www-data /var/backups/vuonxanh; chmod 750 /var/backups/vuonxanh
+cat > /etc/systemd/system/vuonxanh-sao-luu.service <<UNIT
+[Unit]
+Description=Vuon Xanh - sao luu du lieu
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/vx-sao-luu
+UNIT
+cat > /etc/systemd/system/vuonxanh-sao-luu.timer <<UNIT
+[Unit]
+Description=Vuon Xanh - sao luu luc 2h30 sang moi ngay
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 Asia/Ho_Chi_Minh
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload
+systemctl enable --now vuonxanh-sao-luu.timer >/dev/null 2>&1
+[ -n "$(ls /var/backups/vuonxanh 2>/dev/null)" ] || /usr/local/bin/vx-sao-luu >/dev/null 2>&1 || true
 echo "$DOMAIN" > /etc/vuonxanh-domain
 chown -R www-data:www-data /var/lib/vuonxanh
 chmod 750 /var/lib/vuonxanh
@@ -116,6 +145,12 @@ server {
     root $SITE;
     index index.html;
 
+    # Sitemap tự cập nhật khi thêm/xóa trang trong quản trị
+    location = /sitemap.xml {
+        alias /var/lib/vuonxanh/sitemap.xml;
+        default_type application/xml;
+        add_header Cache-Control "no-cache";
+    }
     # Nội dung sửa từ trang quản trị
     location = /noi-dung.js {
         alias /var/lib/vuonxanh/noi-dung.js;

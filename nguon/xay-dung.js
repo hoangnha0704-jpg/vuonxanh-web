@@ -114,6 +114,7 @@ ${sitemap.map((u) => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).
 Allow: /
 Disallow: /mua-hang/
 Disallow: /thanh-toan/
+Disallow: /quan-tri/
 Sitemap: https://__DOMAIN__/sitemap.xml
 `);
 

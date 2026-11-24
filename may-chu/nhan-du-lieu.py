@@ -18,6 +18,8 @@ import os
 import re
 import sqlite3
 import threading
+import urllib.request
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -26,6 +28,11 @@ THU_MUC = os.path.dirname(DB)
 ND_JSON = os.path.join(THU_MUC, "noi-dung.json")      # nội dung sửa từ trang quản trị
 ND_JS = os.path.join(THU_MUC, "noi-dung.js")          # file web đọc (Nginx phục vụ ở /noi-dung.js)
 ANH_DIR = os.path.join(THU_MUC, "anh-tai-len")        # ảnh tải lên (Nginx phục vụ ở /anh-tai-len/)
+TELEGRAM = os.path.join(THU_MUC, "telegram.json")     # cấu hình báo đơn (tạo bằng lệnh vx-telegram)
+TG_API = os.environ.get("VX_TG_API", "https://api.telegram.org")
+SAO_LUU_DIR = os.environ.get("VX_BACKUP_DIR", "/var/backups/vuonxanh")
+SITEMAP_GOC = os.environ.get("VX_SITEMAP_GOC", "/var/www/vuonxanh/sitemap.xml")
+SITEMAP = os.path.join(THU_MUC, "sitemap.xml")
 TRANG_QT = os.environ.get("VX_ADMIN_HTML", os.path.join(os.path.dirname(os.path.abspath(__file__)), "quan-tri.html"))
 PORT = int(os.environ.get("VX_PORT", "8090"))
 VN = timezone(timedelta(hours=7))
@@ -82,6 +89,43 @@ def tien(n):
         return ""
 
 
+# =====================================================================
+#  BÁO ĐƠN MỚI QUA TELEGRAM (cấu hình bằng lệnh: vx-telegram)
+# =====================================================================
+def ten_mien():
+    try:
+        with open("/etc/vuonxanh-domain", encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def bao_telegram(noi_dung):
+    """Gửi tin cho mọi người nhận đã kết nối. Chạy nền để khách không phải chờ."""
+    try:
+        with open(TELEGRAM, encoding="utf-8") as f:
+            cfg = json.load(f)
+    except (OSError, ValueError):
+        return
+    token, nguoi_nhan = cfg.get("token"), cfg.get("chat_ids") or []
+    if not token or not nguoi_nhan:
+        return
+
+    def gui():
+        for cid in nguoi_nhan:
+            try:
+                data = urllib.parse.urlencode({"chat_id": cid, "text": noi_dung[:4000], "disable_web_page_preview": "true"}).encode()
+                urllib.request.urlopen(f"{TG_API}/bot{token}/sendMessage", data=data, timeout=10).read()
+            except Exception as loi:  # mạng lỗi thì bỏ qua, đơn vẫn đã lưu
+                print("Telegram lỗi:", loi, flush=True)
+    threading.Thread(target=gui, daemon=True).start()
+
+
+def link_qt():
+    tm = ten_mien()
+    return f"\nXem: https://{tm}/quan-tri/#khach" if tm else ""
+
+
 def xu_ly(duong_dan, d, ip):
     """Kiểm tra và lưu. Trả về (mã HTTP, nội dung JSON)."""
     if chu(d.get("website"), 10):          # ô bẫy: người thật không thấy ô này, máy spam thì điền
@@ -92,12 +136,14 @@ def xu_ly(duong_dan, d, ip):
         if not ten or not PHONE.match(sdt) or not nd:
             return 400, {"ok": False, "loi": "Thiếu họ tên, số điện thoại hoặc nội dung."}
         luu("tu_van", {"thoi_gian": now, "ho_ten": ten, "dien_thoai": sdt, "email": chu(d.get("email"), 120), "noi_dung": nd, "ip": ip})
+        bao_telegram(f"💬 YÊU CẦU TƯ VẤN MỚI\n👤 {ten}\n📞 {sdt}\n📝 {nd}{link_qt()}")
         return 200, {"ok": True}
     if duong_dan == "/api/dang-ky":
         em = chu(d.get("email"), 120)
         if not EMAIL.match(em):
             return 400, {"ok": False, "loi": "Email chưa đúng."}
         luu("dang_ky", {"thoi_gian": now, "email": em, "ip": ip})
+        bao_telegram(f"✉️ Khách mới đăng ký nhận tin: {em}")
         return 200, {"ok": True}
     if duong_dan == "/api/dat-hang":
         ten, sdt, dc = chu(d.get("name"), 100), chu(d.get("phone"), 20), chu(d.get("addr"), 300)
@@ -108,6 +154,9 @@ def xu_ly(duong_dan, d, ip):
         ma = "VX" + datetime.now(VN).strftime("%d%H%M%S")
         luu("don_hang", {"thoi_gian": now, "ma_don": ma, "ho_ten": ten, "dien_thoai": sdt, "dia_chi": dc, "san_pham": sp,
                          "tong_tien": tien(d.get("total")), "thanh_toan": chu(d.get("pay"), 60), "ghi_chu": chu(d.get("note"), 1000), "ip": ip})
+        ghi = chu(d.get("note"), 1000)
+        bao_telegram(f"🛒 ĐƠN HÀNG MỚI {ma}\n👤 {ten}\n📞 {sdt}\n🏠 {dc}\n🌿 Sản phẩm:\n   • {sp.replace('; ', chr(10) + '   • ')}\n💰 Tổng: {tien(d.get('total'))} ({chu(d.get('pay'), 60) or 'COD'})"
+                     + (f"\n📝 {ghi}" if ghi else "") + link_qt())
         return 200, {"ok": True, "ma_don": ma}
     return 404, {"ok": False}
 
@@ -132,6 +181,47 @@ def nd_doc():
     return d
 
 
+def nd_sitemap(d):
+    """Sitemap = sitemap dựng sẵn + trang mới thêm trong quản trị – trang đã xóa."""
+    try:
+        with open(SITEMAP_GOC, encoding="utf-8") as f:
+            goc = f.read()
+    except OSError:
+        return
+    dong = re.findall(r"<url><loc>([^<]+)</loc><lastmod>([^<]+)</lastmod></url>", goc)
+    if not dong:
+        return
+    m = re.match(r"(https?://[^/]+)", dong[0][0])
+    nen = m.group(1) if m else ""
+    hom_nay = datetime.now(VN).strftime("%Y-%m-%d")
+    an = set()
+    for loai, tien_to in (("sp", "san-pham"), ("bv", "bai-viet"), ("da", "du-an")):
+        for k, r in d.get(loai, {}).items():
+            if r.get("an"):
+                an.add(f"{nen}/{tien_to}-{k}/")
+    for k, r in d.get("dm", {}).items():
+        if r.get("an"):
+            an.add(f"{nen}/danh-muc-{k}/")
+    ket_qua = [(u, lm) for u, lm in dong if u not in an]
+    co = {u for u, _ in ket_qua}
+    moi = []
+    for loai, tien_to in (("sp", "san-pham"), ("bv", "bai-viet"), ("da", "du-an")):
+        for k, r in d.get(loai, {}).items():
+            moi.append((f"{nen}/{tien_to}-{k}/", r))
+    for k, r in d.get("dm", {}).items():
+        moi.append((f"{nen}/danh-muc-{k}/", r))
+    for u, r in moi:
+        if u not in co and u not in an:
+            ket_qua.append((u, hom_nay))
+            co.add(u)
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    xml += "\n".join(f"  <url><loc>{html.escape(u)}</loc><lastmod>{lm}</lastmod></url>" for u, lm in ket_qua) + "\n</urlset>\n"
+    tam = SITEMAP + ".tmp"
+    with open(tam, "w", encoding="utf-8") as f:
+        f.write(xml)
+    os.replace(tam, SITEMAP)
+
+
 def nd_ghi(d):
     """Ghi JSON (kèm bản sao lưu) rồi tạo lại noi-dung.js cho web."""
     os.makedirs(THU_MUC, exist_ok=True)
@@ -142,6 +232,7 @@ def nd_ghi(d):
         json.dump(d, f, ensure_ascii=False, indent=1)
     os.replace(tam, ND_JSON)
     nd_xuat_js(d)
+    nd_sitemap(d)
 
 
 def nd_xuat_js(d=None):
@@ -360,7 +451,13 @@ QUAN_TRI_API = {"/quan-tri/api/du-an": luu_du_an, "/quan-tri/api/danh-muc": luu_
 
 
 def trang_quan_tri():
-    phan = []
+    try:
+        ds = sorted(f for f in os.listdir(SAO_LUU_DIR) if re.fullmatch(r"vuonxanh-[0-9-]+\.tar\.gz", f))
+    except OSError:
+        ds = []
+    sl = (f'Bản sao lưu gần nhất: <b>{ds[-1][9:-7]}</b> · {len(ds)} bản đang giữ trên máy chủ. <a class="btn" href="/quan-tri/sao-luu">Tải bản mới nhất</a>'
+          if ds else "Chưa có bản sao lưu nào (máy chủ tự sao lưu lúc 2h30 sáng mỗi ngày).")
+    phan = [f'<section><div class="hd"><h2>Sao lưu dữ liệu</h2></div><p style="margin:0;padding:0 18px 16px">{sl}</p></section>']
     for bang, (ten, cot) in BANG.items():
         rows = doc(bang)
         dau = "".join(f"<th>{TEN_COT[c]}</th>" for c in cot if c != "ip")
@@ -444,6 +541,15 @@ class XuLy(BaseHTTPRequestHandler):
                 return self.gui(200, f.read(), "text/html; charset=utf-8")
         if p in ("/quan-tri/khach", "/quan-tri/khach/"):
             return self.gui(200, trang_quan_tri(), "text/html; charset=utf-8")
+        if p == "/quan-tri/sao-luu":
+            try:
+                ds = sorted(f for f in os.listdir(SAO_LUU_DIR) if re.fullmatch(r"vuonxanh-[0-9-]+\.tar\.gz", f))
+            except OSError:
+                ds = []
+            if not ds:
+                return self.gui(404, "Chưa có bản sao lưu nào.", "text/plain; charset=utf-8")
+            with open(os.path.join(SAO_LUU_DIR, ds[-1]), "rb") as f:
+                return self.gui(200, f.read(), "application/gzip", {"Content-Disposition": f'attachment; filename="{ds[-1]}"'})
         m = re.fullmatch(r"/quan-tri/tai/([a-z_]+)\.csv", p)
         if m and m.group(1) in BANG:
             ten = f"{m.group(1)}-{datetime.now(VN):%Y%m%d}.csv"
@@ -457,5 +563,6 @@ class XuLy(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     ket_noi().close()
     nd_xuat_js()   # luôn có sẵn noi-dung.js cho web
+    nd_sitemap(nd_doc())
     print(f"Vườn Xanh: đang nhận dữ liệu ở 127.0.0.1:{PORT}, lưu vào {DB}", flush=True)
     ThreadingHTTPServer(("127.0.0.1", PORT), XuLy).serve_forever()

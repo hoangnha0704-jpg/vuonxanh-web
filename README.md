@@ -29,3 +29,10 @@ bash vuonxanh-web-main/cai-dat.sh tenmien.com
 - Cập nhật mã nguồn (chạy lại `cai-dat.sh`) không làm mất nội dung đã sửa
 - Tài khoản: `vx-tai-khoan tenkhach` (tạo hoặc đổi mật khẩu), `vx-tai-khoan --ds` (danh sách), `vx-tai-khoan --xoa tenkhach` (xóa)
 - Lưu ý cho người sửa mã: sản phẩm và bài viết được nhận diện theo **số thứ tự** trong `data.js`. Đừng xóa hay chèn giữa danh sách, chỉ thêm vào cuối, nếu không nội dung đã sửa sẽ lệch sang sản phẩm khác.
+
+## Báo đơn qua Telegram, sao lưu, sitemap
+- `vx-telegram MÃ_BOT`: kết nối bot Telegram (tạo bot bằng @BotFather). `vx-telegram --them` thêm người nhận, `--ds` xem danh sách, `--thu` gửi thử, `--tat` tắt
+- Có đơn hàng / yêu cầu tư vấn / email đăng ký là Telegram báo ngay
+- Sao lưu tự động 2h30 sáng mỗi ngày vào `/var/backups/vuonxanh` (giữ 14 ngày), gửi file qua Telegram; tải bản mới nhất ở tab "Đơn hàng & khách"
+- `vx-sao-luu`: sao lưu ngay. `vx-khoi-phuc`: xem danh sách, `vx-khoi-phuc TÊN_FILE`: khôi phục
+- `sitemap.xml` tự cập nhật khi thêm/xóa sản phẩm, bài viết, dự án, danh mục trong trang quản trị

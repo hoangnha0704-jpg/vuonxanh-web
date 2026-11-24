@@ -2,4 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /mua-hang/
 Disallow: /thanh-toan/
+Disallow: /quan-tri/
 Sitemap: https://__DOMAIN__/sitemap.xml
