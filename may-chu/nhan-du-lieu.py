@@ -246,29 +246,32 @@ def nd_xuat_js(d=None):
   Object.keys(D.sp).forEach(function (k) {
     var i = +k, r = D.sp[k];
     var p = PRODUCTS[i] || (PRODUCTS[i] = { art: macDinh, cats: [], short: "", size: "", light: "", price: 0, name: "" });
-    ["name", "price", "cats", "size", "light", "short", "an", "them"].forEach(function (f) { if (r[f] !== undefined) p[f] = r[f]; });
+    ["name", "price", "cats", "size", "light", "short", "an", "them", "kw", "seoTitle", "seoDesc", "alt"].forEach(function (f) { if (r[f] !== undefined) p[f] = r[f]; });
     p.id = i; p.msp = 300 + i; p.stock = r.stock !== false;
-    if (r.img) p.art = Object.assign({}, p.art, { img: r.img, alt: p.name });
+    if (r.img) p.art = Object.assign({}, p.art, { img: r.img });
+    p.art = Object.assign({}, p.art, { alt: r.alt || p.name });
   });
   for (var i = 0; i < PRODUCTS.length; i++) if (!PRODUCTS[i]) PRODUCTS[i] = { id: i, an: true, cats: [], art: macDinh, name: "", price: 0 };
   Object.keys(D.bv).forEach(function (k) {
     var i = +k, r = D.bv[k];
     var x = POSTS[i] || (POSTS[i] = { t: "", d: "", p: "", s: [], art: macDinh });
-    ["t", "d", "p", "s", "an"].forEach(function (f) { if (r[f] !== undefined) x[f] = r[f]; });
-    if (r.img) x.art = Object.assign({}, x.art, { img: r.img, alt: "" });
+    ["t", "d", "p", "s", "an", "kw", "seoTitle", "seoDesc", "alt"].forEach(function (f) { if (r[f] !== undefined) x[f] = r[f]; });
+    if (r.img) x.art = Object.assign({}, x.art, { img: r.img });
+    x.art = Object.assign({}, x.art, { alt: r.alt || "" });
   });
   Object.keys(D.da || {}).forEach(function (k) {
     var i = +k, r = D.da[k];
     var x = PROJECTS[i] || (PROJECTS[i] = { t: "", p: "", plants: "", art: macDinh });
-    ["t", "p", "plants", "loc", "s", "gal", "an", "them"].forEach(function (f) { if (r[f] !== undefined) x[f] = r[f]; });
-    if (r.img) x.art = Object.assign({}, x.art, { img: r.img, alt: "" });
+    ["t", "p", "plants", "loc", "s", "gal", "an", "them", "kw", "seoTitle", "seoDesc", "alt"].forEach(function (f) { if (r[f] !== undefined) x[f] = r[f]; });
+    if (r.img) x.art = Object.assign({}, x.art, { img: r.img });
+    x.art = Object.assign({}, x.art, { alt: r.alt || "" });
   });
   for (var q = 0; q < PROJECTS.length; q++) if (!PROJECTS[q]) PROJECTS[q] = { an: true, t: "", p: "", plants: "", art: macDinh };
   for (var j = 0; j < POSTS.length; j++) if (!POSTS[j]) POSTS[j] = { an: true, t: "", d: "", p: "", s: [], art: macDinh };
   var N = {};
   Object.keys(D.dm || {}).forEach(function (s) {
     var r = D.dm[s];
-    CATEGORIES[s] = Object.assign({}, CATEGORIES[s] || {}, { name: r.name, intro: r.intro, an: !!r.an });
+    CATEGORIES[s] = Object.assign({}, CATEGORIES[s] || {}, { name: r.name, intro: r.intro, an: !!r.an, kw: r.kw, seoTitle: r.seoTitle, seoDesc: r.seoDesc });
     N[s] = r.nhom;
   });
   window.DM_NHOM = N;
@@ -298,6 +301,11 @@ def so_id(v, toi_da=100000):
     except (TypeError, ValueError):
         return None
     return i if 0 <= i < toi_da else None
+
+
+def seo(d):
+    """Trường SEO chung: từ khóa chính, tiêu đề SEO, mô tả SEO, chữ mô tả ảnh."""
+    return {"kw": e(d.get("kw"), 100), "seoTitle": e(d.get("seoTitle"), 120), "seoDesc": e(d.get("seoDesc"), 320), "alt": e(d.get("alt"), 160)}
 
 
 def anh_hop_le(v):
@@ -330,7 +338,7 @@ def luu_san_pham(d):
         if not cats:
             return 400, {"ok": False, "loi": "Chọn ít nhất một danh mục."}
         r.update({"name": ten, "price": gia, "cats": cats, "size": e(d.get("size"), 80), "light": e(d.get("light"), 80),
-                  "short": e(d.get("short"), 600), "stock": bool(d.get("stock", True)), "an": False})
+                  "short": e(d.get("short"), 600), "stock": bool(d.get("stock", True)), "an": False, **seo(d)})
         anh = anh_hop_le(d.get("img"))
         if anh:
             r["img"] = anh
@@ -367,7 +375,7 @@ def luu_bai_viet(d):
         for m in (d.get("s") or [])[:30]:
             if isinstance(m, list) and len(m) == 2 and (chu(m[0], 5) or chu(m[1], 5)):
                 muc.append([e(m[0], 200) or "Chi tiết", doan_van(m[1], 8000)])
-        r.update({"t": tieu_de, "d": ngay, "p": e(d.get("p"), 600), "s": muc, "an": False})
+        r.update({"t": tieu_de, "d": ngay, "p": e(d.get("p"), 600), "s": muc, "an": False, **seo(d)})
         anh = anh_hop_le(d.get("img"))
         if anh:
             r["img"] = anh
@@ -417,7 +425,7 @@ def luu_du_an(d):
                 muc.append([e(m[0], 200) or "Chi tiết", doan_van(m[1], 8000)])
         gal = [u for u in (anh_hop_le(v) for v in (d.get("gal") or [])[:40]) if u]
         r.update({"t": tieu_de, "p": e(d.get("p"), 600), "loc": e(d.get("loc"), 120), "plants": e(d.get("plants"), 300),
-                  "s": muc, "gal": gal, "an": False})
+                  "s": muc, "gal": gal, "an": False, **seo(d)})
         anh = anh_hop_le(d.get("img"))
         if anh:
             r["img"] = anh
@@ -441,13 +449,103 @@ def luu_danh_muc(d):
         ten = e(d.get("name"), 80)
         if not ten:
             return 400, {"ok": False, "loi": "Chưa nhập tên danh mục."}
-        r.update({"name": ten, "intro": e(d.get("intro"), 400), "nhom": "mua" if d.get("nhom") == "mua" else "loai", "an": False})
+        r.update({"name": ten, "intro": e(d.get("intro"), 400), "nhom": "mua" if d.get("nhom") == "mua" else "loai", "an": False, **seo(d)})
     nd["dm"][slug] = r
     nd_ghi(nd)
     return 200, {"ok": True, "slug": slug}
 
 
 QUAN_TRI_API = {"/quan-tri/api/du-an": luu_du_an, "/quan-tri/api/danh-muc": luu_danh_muc, "/quan-tri/api/san-pham": luu_san_pham, "/quan-tri/api/bai-viet": luu_bai_viet, "/quan-tri/api/anh": luu_anh}
+
+
+# =====================================================================
+#  TRANG CÓ THẺ SEO ĐÚNG: sản phẩm / bài viết / dự án / danh mục
+#  Nginx chuyển các đường dẫn này sang đây. Trang chưa sửa gì -> trả nguyên
+#  file dựng sẵn. Trang đã sửa / thêm mới -> chèn lại tiêu đề, mô tả,
+#  ảnh chia sẻ (og:image), canonical, dữ liệu có cấu trúc (JSON-LD).
+#  Trang đã xóa -> 404 để Google bỏ khỏi kết quả tìm kiếm.
+# =====================================================================
+WEB_ROOT = os.environ.get("VX_WEB_ROOT", "/var/www/vuonxanh")
+TRANG_RE = re.compile(r"^/(?:(san-pham|bai-viet|du-an)-([0-9]{1,5})|danh-muc-([a-z0-9-]{1,40}))/?$")
+
+
+def doc_file(*phan):
+    try:
+        with open(os.path.join(WEB_ROOT, *phan), encoding="utf-8") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+def thay_meta(h, ten, gia_tri, kieu="name"):
+    gia_tri = html.escape(html.unescape(gia_tri), quote=True)
+    mau = re.compile(r'<meta %s="%s" content="[^"]*">' % (kieu, re.escape(ten)))
+    the = f'<meta {kieu}="{ten}" content="{gia_tri}">'
+    return mau.sub(lambda _: the, h, count=1) if mau.search(h) else h.replace("</title>", "</title>\n  " + the, 1)
+
+
+def trang_seo(duong):
+    """Trả (mã HTTP, html) hoặc None nếu không phải trang cần xử lý."""
+    m = TRANG_RE.match(duong)
+    if not m:
+        return None
+    loai, so, dm = m.groups()
+    route = f"{loai}-{so}" if loai else f"danh-muc-{dm}"
+    tinh = doc_file(route, "index.html")
+    nd = nd_doc()
+    r = (nd["dm"].get(dm) if dm else nd[{"san-pham": "sp", "bai-viet": "bv", "du-an": "da"}[loai]].get(str(int(so)))) or None
+    if r and r.get("an") or (not r and tinh is None):
+        return 404, doc_file("404.html") or "Không tìm thấy trang"
+    if not r:
+        return 200, tinh
+    h = tinh if tinh is not None else doc_file("index.html") or ""
+    tm = ten_mien()
+    m_goc = re.search(r'<link rel="canonical" href="(https?://[^/"]+)', h)
+    goc = f"https://{tm}" if tm else (m_goc.group(1) if m_goc else "")
+    m_ten = re.search(r'<meta property="og:site_name" content="([^"]*)">', h)
+    ten_shop = html.unescape(m_ten.group(1)) if m_ten else "Vườn Xanh"
+    U = html.unescape
+    if dm:
+        ten, mo_ta, anh = U(r.get("name", "")), U(r.get("intro", "")), ""
+    elif loai == "san-pham":
+        ten, mo_ta, anh = U(r.get("name", "")), U(f"{r.get('name', '')} giá {tien(r.get('price'))}. {r.get('short', '')}"), r.get("img", "")
+    else:
+        ten, mo_ta, anh = U(r.get("t", "")), U(r.get("p", "")), r.get("img", "")
+    tieu_de = U(r.get("seoTitle") or "") or f"{ten} – {ten_shop}"
+    mo_ta = (U(r.get("seoDesc") or "") or mo_ta)[:300]
+    url = f"{goc}/{route}/"
+    h = re.sub(r"<title>[\s\S]*?</title>", lambda _: f"<title>{html.escape(tieu_de)}</title>", h, count=1)
+    h = thay_meta(h, "description", mo_ta)
+    h = thay_meta(h, "og:title", tieu_de, "property")
+    h = thay_meta(h, "og:description", mo_ta, "property")
+    h = thay_meta(h, "og:url", url, "property")
+    h = thay_meta(h, "og:type", "product" if loai == "san-pham" else "article" if loai else "website", "property")
+    if anh:
+        h = thay_meta(h, "og:image", goc + anh, "property")
+    h = re.sub(r'<link rel="canonical" href="[^"]*">', lambda _: f'<link rel="canonical" href="{url}">', h, count=1)
+    if "<link rel=\"canonical\"" not in h:
+        h = h.replace("</title>", f'</title>\n  <link rel="canonical" href="{url}">', 1)
+    ld = None
+    if loai == "san-pham":
+        ld = {"@context": "https://schema.org", "@type": "Product", "name": ten, "description": U(r.get("short", "")), "sku": str(300 + int(so)),
+              "brand": {"@type": "Brand", "name": ten_shop},
+              "offers": {"@type": "Offer", "priceCurrency": "VND", "price": r.get("price", 0), "url": url,
+                         "availability": "https://schema.org/" + ("InStock" if r.get("stock", True) else "OutOfStock")}}
+        if anh:
+            ld["image"] = goc + anh
+    elif loai in ("bai-viet", "du-an"):
+        ld = {"@context": "https://schema.org", "@type": "Article", "headline": ten[:110], "description": mo_ta,
+              "author": {"@type": "Organization", "name": ten_shop}, "mainEntityOfPage": url}
+        if anh:
+            ld["image"] = goc + anh
+        if r.get("d"):
+            dd, mm, yy = (r["d"].split("/") + ["", "", ""])[:3]
+            if yy:
+                ld["datePublished"] = f"{yy}-{mm.zfill(2)}-{dd.zfill(2)}"
+    h = re.sub(r'<script type="application/ld\+json">[\s\S]*?</script>', "", h)
+    if ld:
+        h = h.replace("</head>", '<script type="application/ld+json">' + json.dumps(ld, ensure_ascii=False).replace("<", "\\u003c") + "</script>\n</head>", 1)
+    return 200, h
 
 
 def trang_quan_tri():
@@ -536,6 +634,9 @@ class XuLy(BaseHTTPRequestHandler):
 
     def do_GET(self):
         p = self.path.split("?")[0]
+        kq = trang_seo(p)
+        if kq:
+            return self.gui(kq[0], kq[1], "text/html; charset=utf-8")
         if p in ("/quan-tri", "/quan-tri/"):
             with open(TRANG_QT, encoding="utf-8") as f:
                 return self.gui(200, f.read(), "text/html; charset=utf-8")

@@ -69,6 +69,23 @@
   .gal div { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #f1efe9; }
   .gal img { width: 100%; height: 100%; object-fit: cover; }
   .gal button { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; line-height: 1; }
+  details.seo { border: 1px solid var(--line); border-radius: 14px; background: #fbfaf6; }
+  details.seo > summary { cursor: pointer; padding: 12px 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; list-style: none; }
+  details.seo > summary::-webkit-details-marker { display: none; }
+  details.seo > summary::before { content: "▸"; color: var(--muted); transition: transform .2s; }
+  details.seo[open] > summary::before { transform: rotate(90deg); }
+  .seo-body { padding: 0 16px 16px; display: grid; gap: 12px; }
+  .diem { margin-left: auto; font-size: 13px; padding: 2px 10px; border-radius: 999px; font-weight: 700; }
+  .d-tot { background: #e2f1df; color: #2f6b45; } .d-kha { background: #fbeed9; color: #a2621b; } .d-kem { background: #f8e0d8; color: #b4542f; }
+  .dem { font-size: 12px; color: var(--muted); justify-self: end; font-weight: 400; }
+  .gg { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-family: Arial, sans-serif; }
+  .gg small { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; font-family: system-ui, sans-serif; }
+  .gg-url { font-size: 13px; color: #4d5156; } .gg-t { font-size: 19px; color: #1a0dab; line-height: 1.3; margin: 2px 0; } .gg-d { font-size: 14px; color: #4d5156; line-height: 1.5; }
+  .seo-ds { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 14px; }
+  .seo-ds li { display: flex; gap: 8px; align-items: flex-start; }
+  .seo-ds li::before { content: ""; width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex: none; }
+  .seo-ds .tot::before { background: #3c9a5b; } .seo-ds .kha::before { background: #e0a030; } .seo-ds .kem::before { background: #d0563a; }
+  .chip.d-tot, .chip.d-kha, .chip.d-kem { font-weight: 700; }
   .empty { padding: 40px; text-align: center; color: var(--muted); }
   @media (max-width: 640px) {
     .row, .pic { grid-template-columns: 1fr; }
@@ -132,7 +149,7 @@ const anhSP = (p) => (p.art && p.art.img ? `<img src="${p.art.img}" alt="" loadi
 function theSP(p) {
   const hot = hotNow().includes(p.id);
   return `<button class="item" data-sp="${p.id}"><span class="im">${anhSP(p)}</span><span class="tx"><b>${p.name}</b><span>${fmt(p.price)} · ${p.size || ""}</span>
-    <span class="chips">${p.stock === false ? `<i class="chip out">Hết hàng</i>` : `<i class="chip">Còn hàng</i>`}${hot ? `<i class="chip hot">Bán chạy</i>` : ""}</span></span></button>`;
+    <span class="chips">${p.stock === false ? `<i class="chip out">Hết hàng</i>` : `<i class="chip">Còn hàng</i>`}${hot ? `<i class="chip hot">Bán chạy</i>` : ""}${chipSeo("sp", p, p.id)}</span></span></button>`;
 }
 function trangSanPham() {
   const q = tim.toLowerCase();
@@ -161,11 +178,12 @@ function suaSanPham(id) {
     <div class="f"><b style="font-size:14px">Danh mục * <small style="font-weight:400;color:var(--muted)">(chọn một hoặc nhiều)</small></b>
       <div class="cats">${Object.entries(CATEGORIES).filter(([k, c]) => !c.an || p.cats.includes(k)).map(([k, c]) => `<label><input type="checkbox" name="cat" value="${k}"${p.cats.includes(k) ? " checked" : ""}> ${c.name}</label>`).join("")}</div></div>
     <div class="checks"><label><input type="checkbox" id="fStock"${p.stock !== false ? " checked" : ""}> Còn hàng</label><label><input type="checkbox" id="fHot"${hot ? " checked" : ""}> Hiện trong "Cây bán chạy"</label></div>
+    ${seoPanel("sp", p)}
     <p class="msg" id="edMsg"></p>
     <div class="actions"><div>${moi ? "" : p.an ? `<span style="color:var(--muted);font-size:14px">Sản phẩm này đang bị ẩn. Bấm Lưu để hiện lại.</span>` : `<button type="button" class="btn red" data-xoa>Xóa sản phẩm</button>`}</div>
       <div>${moi || p.an ? "" : `<a class="btn ghost" href="/san-pham-${p.id}/" target="_blank">Xem trên web ↗</a>`}<button class="btn" type="submit" id="edLuu">${p.an ? "Lưu và hiện lại" : "Lưu"}</button></div></div>
   </form>`;
-  $("dlg").showModal();
+  $("dlg").showModal(); capNhatSeo();
 }
 function goiSanPham() {
   const cats = [...document.querySelectorAll("input[name=cat]:checked")].map((x) => x.value);
@@ -177,7 +195,7 @@ function goiSanPham() {
   if (!d.name.trim()) throw new Error("Chưa nhập tên sản phẩm.");
   if (d.price === "") throw new Error("Chưa nhập giá.");
   if (!cats.length) throw new Error("Chọn ít nhất một danh mục.");
-  return d;
+  return { ...d, ...seoGoi() };
 }
 
 // ---------------------------------------------------------------- BÀI VIẾT
@@ -197,7 +215,7 @@ function tachMuc(text) {
 }
 function theBV(x, i) {
   return `<button class="item post" data-bv="${i}"><span class="im">${x.art && x.art.img ? `<img src="${x.art.img}" alt="" loading="lazy">` : "Chưa có ảnh"}</span>
-    <span class="tx"><b>${x.t}</b><span>${x.d}</span></span></button>`;
+    <span class="tx"><b>${x.t}</b><span>${x.d}</span><span class="chips">${chipSeo("bv", x, i)}</span></span></button>`;
 }
 function trangBaiViet() {
   const q = tim.toLowerCase();
@@ -220,11 +238,12 @@ function suaBaiViet(id) {
     <label class="f">Đoạn mở đầu <small>1–2 câu tóm tắt, hiện ở danh sách bài viết</small><textarea id="fP" rows="3" maxlength="600">${esc(veChu(x.p))}</textarea></label>
     <label class="f">Nội dung bài <small>Mỗi mục bắt đầu bằng một dòng <b>## Tiêu đề mục</b>. Để trống một dòng để sang đoạn mới.</small>
       <textarea id="fS" rows="14" placeholder="## Vì sao nên trồng cây này?&#10;Viết nội dung ở đây…&#10;&#10;## Cách chăm sóc&#10;Viết nội dung ở đây…">${esc(sangChu(x.s))}</textarea></label>
+    ${seoPanel("bv", x)}
     <p class="msg" id="edMsg"></p>
     <div class="actions"><div>${moi || x.an ? "" : `<button type="button" class="btn red" data-xoa>Xóa bài viết</button>`}</div>
       <div>${moi || x.an ? "" : `<a class="btn ghost" href="/bai-viet-${id}/" target="_blank">Xem trên web ↗</a>`}<button class="btn" type="submit" id="edLuu">${x.an ? "Lưu và hiện lại" : "Lưu"}</button></div></div>
   </form>`;
-  $("dlg").showModal();
+  $("dlg").showModal(); capNhatSeo();
 }
 function goiBaiViet() {
   const id = dang.id;
@@ -233,13 +252,13 @@ function goiBaiViet() {
   if (!d.t.trim()) throw new Error("Chưa nhập tiêu đề.");
   if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(d.d)) throw new Error("Ngày đăng cần dạng ngày/tháng/năm, ví dụ " + homNay());
   if (!d.s.length) throw new Error("Chưa có nội dung bài viết.");
-  return d;
+  return { ...d, ...seoGoi() };
 }
 
 // ---------------------------------------------------------------- DỰ ÁN
 function theDA(x, i) {
   return `<button class="item post" data-da="${i}"><span class="im">${x.art && x.art.img ? `<img src="${x.art.img}" alt="" loading="lazy">` : "Chưa có ảnh"}</span>
-    <span class="tx"><b>${x.t}</b><span>${x.loc || ""}${(x.gal || []).length ? ` · ${x.gal.length} ảnh công trình` : ""}</span></span></button>`;
+    <span class="tx"><b>${x.t}</b><span>${x.loc || ""}${(x.gal || []).length ? ` · ${x.gal.length} ảnh công trình` : ""}</span><span class="chips">${chipSeo("da", x, i)}</span></span></button>`;
 }
 function trangDuAn() {
   const q = tim.toLowerCase();
@@ -266,19 +285,20 @@ function suaDuAn(id) {
       <textarea id="fS" rows="9" placeholder="## Yêu cầu của khách&#10;…&#10;&#10;## Giải pháp&#10;…&#10;&#10;## Kết quả&#10;…">${esc(sangChu(x.s))}</textarea></label>
     <div class="f"><b style="font-size:14px">Ảnh công trình <small style="font-weight:400;color:var(--muted)">(chọn được nhiều ảnh một lúc)</small></b>
       <input type="file" id="fGal" accept="image/*" multiple><div class="gal" id="gal"></div></div>
+    ${seoPanel("da", x)}
     <p class="msg" id="edMsg"></p>
     <div class="actions"><div>${moi || x.an ? "" : `<button type="button" class="btn red" data-xoa>Xóa dự án</button>`}</div>
       <div>${moi || x.an ? "" : `<a class="btn ghost" href="/du-an-${id}/" target="_blank">Xem trên web ↗</a>`}<button class="btn" type="submit" id="edLuu">${x.an ? "Lưu và hiện lại" : "Lưu"}</button></div></div>
   </form>`;
   veGal();
-  $("dlg").showModal();
+  $("dlg").showModal(); capNhatSeo();
 }
 function goiDuAn() {
   const id = dang.id;
   const d = { id, base_len: PROJECTS.length, t: $("fT").value, loc: $("fLoc").value, plants: $("fPl").value, p: $("fP").value, s: tachMuc($("fS").value),
     gal: dang.gal, img: dang.img || (id !== "moi" && PROJECTS[id].art && PROJECTS[id].art.img) || dang.gal[0] || "" };
   if (!d.t.trim()) throw new Error("Chưa nhập tên dự án.");
-  return d;
+  return { ...d, ...seoGoi() };
 }
 
 // ---------------------------------------------------------------- DANH MỤC
@@ -288,7 +308,7 @@ const soSP = (s) => PRODUCTS.filter((p) => p && !p.an && p.cats && p.cats.includ
 const taoSlug = (t) => unesc(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
 function theDM([s, c]) {
   return `<button class="item post" data-dm="${s}" style="cursor:pointer"><span class="tx"><b>${c.name}</b><span>${soSP(s)} sản phẩm · ${nhomCua(s) === "mua" ? "Theo tên cây" : "Theo loại cây"}</span>
-    <span class="chips">${c.an ? `<i class="chip out">Đã xóa</i>` : `<i class="chip">Đang hiện</i>`}</span></span></button>`;
+    <span class="chips">${c.an ? `<i class="chip out">Đã xóa</i>` : `<i class="chip">Đang hiện</i>`}${chipSeo("dm", c, s)}</span></span></button>`;
 }
 function trangDanhMuc() {
   const q = tim.toLowerCase();
@@ -311,11 +331,12 @@ function suaDanhMuc(slug) {
     <div class="f"><b style="font-size:14px">Hiện trong menu Sản phẩm ở cột</b>
       <div class="checks"><label><input type="radio" name="nhom" value="loai"${n === "loai" ? " checked" : ""}> Theo loại cây</label><label><input type="radio" name="nhom" value="mua"${n === "mua" ? " checked" : ""}> Cây mua nhiều (theo tên cây)</label></div></div>
     ${moi ? "" : `<p style="margin:0;font-size:14px;color:var(--muted)">Đang có ${soSP(slug)} sản phẩm trong danh mục này.</p>`}
+    ${seoPanel("dm", c)}
     <p class="msg" id="edMsg"></p>
     <div class="actions"><div>${moi || c.an ? "" : `<button type="button" class="btn red" data-xoa>Xóa danh mục</button>`}</div>
       <div>${moi || c.an ? "" : `<a class="btn ghost" href="/danh-muc-${slug}/" target="_blank">Xem trên web ↗</a>`}<button class="btn" type="submit" id="edLuu">${c.an ? "Lưu và hiện lại" : "Lưu"}</button></div></div>
   </form>`;
-  $("dlg").showModal();
+  $("dlg").showModal(); capNhatSeo();
 }
 function goiDanhMuc() {
   const moi = dang.id === "moi", name = $("fTen").value;
@@ -323,7 +344,92 @@ function goiDanhMuc() {
   const slug = moi ? taoSlug(name) : dang.id;
   if (!slug) throw new Error("Tên danh mục cần có chữ hoặc số.");
   if (moi && CATEGORIES[slug] && !CATEGORIES[slug].an) throw new Error("Đã có danh mục tên giống vậy.");
-  return { moi, slug, name, intro: $("fIntro").value, nhom: (document.querySelector("input[name=nhom]:checked") || {}).value || "loai" };
+  return { moi, slug, name, intro: $("fIntro").value, nhom: (document.querySelector("input[name=nhom]:checked") || {}).value || "loai", ...seoGoi() };
+}
+
+// ---------------------------------------------------------------- SEO
+// Chấm điểm theo các tiêu chí SEO cơ bản (giống Yoast/RankMath): từ khóa, tiêu đề, mô tả, nội dung, ảnh.
+const chuan = (t) => unesc(t).normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim();
+const soTu = (t) => (unesc(t).replace(/<[^>]+>/g, " ").match(/\S+/g) || []).length;
+const NGUONG_CHU = { sp: [40, 15], bv: [300, 150], da: [150, 70], dm: [30, 12] };   // [tốt, tạm] số chữ
+const TEN_LOAI = { sp: "mô tả sản phẩm", bv: "bài viết", da: "nội dung dự án", dm: "giới thiệu danh mục" };
+function tieuDeHieuLuc(o) { return o.seoTitle ? unesc(o.seoTitle) : `${unesc(o.ten)} – ${SHOP.name}`; }
+function cham(o) {
+  const ds = [], kw = chuan(o.kw || ""), td = tieuDeHieuLuc(o), mt = unesc(o.seoDesc || o.moTaTuDong || "");
+  const add = (muc, t) => ds.push([muc, t]);
+  kw ? add("tot", `Từ khóa chính: “${unesc(o.kw)}”.`) : add("kem", "Chưa có từ khóa chính – nhập cụm từ khách hay tìm trên Google.");
+  const L = td.length;
+  add(L >= 30 && L <= 60 ? "tot" : L >= 20 && L <= 70 ? "kha" : "kem", `Tiêu đề SEO dài ${L} ký tự (nên 30–60)${o.seoTitle ? "" : " – đang tự lấy theo tên"}.`);
+  if (kw) chuan(td).includes(kw) ? add("tot", "Tiêu đề có chứa từ khóa.") : add("kem", "Tiêu đề chưa có từ khóa chính.");
+  const D = mt.length;
+  add(!o.seoDesc ? (D >= 70 ? "kha" : "kem") : D >= 120 && D <= 160 ? "tot" : D >= 70 && D <= 200 ? "kha" : "kem",
+    o.seoDesc ? `Mô tả SEO dài ${D} ký tự (nên 120–160).` : `Chưa viết mô tả SEO – Google đang dùng mô tả tự động (${D} ký tự).`);
+  if (kw) chuan(mt).includes(kw) ? add("tot", "Mô tả có chứa từ khóa.") : add("kem", "Mô tả chưa có từ khóa chính.");
+  const n = soTu(o.noiDung), [tot, tam] = NGUONG_CHU[o.loai];
+  add(n >= tot ? "tot" : n >= tam ? "kha" : "kem", `${TEN_LOAI[o.loai][0].toUpperCase() + TEN_LOAI[o.loai].slice(1)} có ${n} chữ (nên từ ${tot} chữ).`);
+  if (kw) chuan(o.noiDung).includes(kw) ? add("tot", "Nội dung có nhắc đến từ khóa.") : add("kha", "Nội dung chưa nhắc đến từ khóa.");
+  if (o.loai === "bv" || o.loai === "da") {
+    const h = o.soMuc || 0;
+    add(h >= 2 ? "tot" : h === 1 ? "kha" : "kem", h ? `Có ${h} tiêu đề mục (##).` : "Chưa chia mục bằng dòng ## – bài dễ đọc hơn khi có tiêu đề mục.");
+  }
+  if (o.loai !== "dm") {
+    o.coAnh ? add("tot", "Đã có ảnh.") : add("kem", "Chưa có ảnh.");
+    if (o.coAnh) o.alt ? add(kw && !chuan(o.alt).includes(kw) ? "kha" : "tot", kw && !chuan(o.alt).includes(kw) ? "Chữ mô tả ảnh chưa có từ khóa." : "Ảnh có chữ mô tả (alt).")
+      : add("kha", "Chưa có chữ mô tả ảnh (alt).");
+  }
+  if (o.trung) add("kem", "Tiêu đề bị trùng với một trang khác – nên đặt tiêu đề riêng.");
+  const diem = Math.round(100 * ds.reduce((t, [m]) => t + (m === "tot" ? 1 : m === "kha" ? 0.5 : 0), 0) / ds.length);
+  return { ds, diem, td, mt };
+}
+const mucDiem = (d) => (d >= 80 ? ["d-tot", "Tốt"] : d >= 50 ? ["d-kha", "Khá"] : ["d-kem", "Cần cải thiện"]);
+// Dữ liệu SEO từ một mục đã lưu (dùng cho điểm trên thẻ danh sách)
+function seoTuMuc(loai, x, id) {
+  const ten = loai === "bv" || loai === "da" ? x.t : x.name;
+  const moTaTuDong = loai === "sp" ? `${unesc(x.name)} giá ${fmt(x.price)}. ${unesc(x.short)}` : loai === "dm" ? `${unesc(x.name)} tại ${SHOP.name}: ${unesc(x.intro)}` : unesc(x.p);
+  const noiDung = loai === "sp" ? x.short : loai === "dm" ? x.intro : `${x.p} ${(x.s || []).map(([h, t]) => h + " " + t).join(" ")}`;
+  return { loai, kw: x.kw, seoTitle: x.seoTitle, seoDesc: x.seoDesc, alt: x.alt, ten, moTaTuDong, noiDung, soMuc: (x.s || []).length, coAnh: !!(x.art && x.art.img), trung: trungTieuDe(loai, id, tieuDeHieuLuc({ seoTitle: x.seoTitle, ten })) };
+}
+function tatCa(loai) {
+  return loai === "sp" ? PRODUCTS.map((x) => [x, x && x.id]) : loai === "bv" ? POSTS.map((x, i) => [x, i]) : loai === "da" ? PROJECTS.map((x, i) => [x, i]) : Object.entries(CATEGORIES).map(([k, c]) => [c, k]);
+}
+function trungTieuDe(loai, id, td) {
+  const a = chuan(td);
+  return tatCa(loai).some(([x, k]) => x && !x.an && String(k) !== String(id) && chuan(tieuDeHieuLuc({ seoTitle: x.seoTitle, ten: x.t || x.name })) === a);
+}
+const chipSeo = (loai, x, id) => { const d = cham(seoTuMuc(loai, x, id)).diem, [c] = mucDiem(d); return `<i class="chip ${c}" title="Điểm SEO">SEO ${d}</i>`; };
+
+function seoPanel(loai, x) {
+  const duong = { sp: "san-pham", bv: "bai-viet", da: "du-an", dm: "danh-muc" }[loai];
+  return `<details class="seo" open><summary>Tối ưu SEO (Google) <span class="diem" id="seoDiem"></span></summary><div class="seo-body">
+    <label class="f">Từ khóa chính <small>Cụm từ khách hay gõ trên Google để tìm trang này, ví dụ “cây kim tiền để sàn”.</small><input id="sKw" maxlength="100" value="${esc(unesc(x.kw))}"></label>
+    <label class="f">Tiêu đề SEO <small>Dòng chữ xanh trên Google. Nên 30–60 ký tự và có từ khóa. Để trống = tự dùng “Tên – ${SHOP.name}”.</small><input id="sTitle" maxlength="120" value="${esc(unesc(x.seoTitle))}"><span class="dem" id="demT"></span></label>
+    <label class="f">Mô tả SEO <small>Đoạn chữ dưới tiêu đề trên Google. Nên 120–160 ký tự, có từ khóa và lời mời (gọi ngay, xem giá…).</small><textarea id="sDesc" rows="3" maxlength="320">${esc(unesc(x.seoDesc))}</textarea><span class="dem" id="demD"></span></label>
+    ${loai === "dm" ? "" : `<label class="f">Chữ mô tả ảnh (alt) <small>Mô tả ngắn ảnh, giúp Google Hình ảnh hiểu ảnh. Ví dụ “Cây kim tiền để sàn chậu sứ trắng”.</small><input id="sAlt" maxlength="160" value="${esc(unesc(x.alt))}"></label>`}
+    <div class="gg"><small>Xem trước trên Google</small><div class="gg-url">${location.host} › ${duong}-…</div><div class="gg-t" id="ggT"></div><div class="gg-d" id="ggD"></div></div>
+    <b style="font-size:14px">Đánh giá SEO</b><ul class="seo-ds" id="seoDs"></ul>
+  </div></details>`;
+}
+const seoGoi = () => ({ kw: $("sKw").value, seoTitle: $("sTitle").value, seoDesc: $("sDesc").value, alt: $("sAlt") ? $("sAlt").value : "" });
+function seoTuForm() {
+  const L = dang.loai, v = (id) => ($(id) ? $(id).value : "");
+  const ten = L === "bv" || L === "da" ? v("fT") : v("fTen");
+  const cu = L === "sp" ? PRODUCTS[dang.id] : L === "bv" ? POSTS[dang.id] : L === "da" ? PROJECTS[dang.id] : CATEGORIES[dang.id];
+  const coAnh = !!(dang.img || (cu && cu.art && cu.art.img) || (L === "da" && dang.gal && dang.gal.length));
+  const moTaTuDong = L === "sp" ? `${ten} giá ${fmt(v("fGia"))}. ${v("fShort")}` : L === "dm" ? `${ten} tại ${SHOP.name}: ${v("fIntro")}` : v("fP");
+  const noiDung = L === "sp" ? v("fShort") : L === "dm" ? v("fIntro") : `${v("fP")} ${v("fS")}`;
+  const soMuc = L === "bv" || L === "da" ? tachMuc(v("fS")).filter(([h]) => h !== "Chi tiết").length : 0;
+  const o = { loai: L, kw: v("sKw"), seoTitle: v("sTitle"), seoDesc: v("sDesc"), alt: v("sAlt"), ten, moTaTuDong, noiDung, soMuc, coAnh };
+  o.trung = trungTieuDe(L, dang.id, tieuDeHieuLuc(o));
+  return o;
+}
+function capNhatSeo() {
+  if (!$("seoDs")) return;
+  const { ds, diem, td, mt } = cham(seoTuForm()), [c, chu] = mucDiem(diem);
+  $("seoDiem").className = "diem " + c; $("seoDiem").textContent = `${diem}/100 · ${chu}`;
+  $("seoDs").innerHTML = ds.map(([m, t]) => `<li class="${m}">${esc(t)}</li>`).join("");
+  $("ggT").textContent = td.length > 62 ? td.slice(0, 60) + "…" : td;
+  $("ggD").textContent = mt.length > 160 ? mt.slice(0, 157) + "…" : mt || "(Chưa có mô tả)";
+  $("demT").textContent = `${$("sTitle").value.length}/60`; $("demD").textContent = `${$("sDesc").value.length}/160`;
 }
 
 // ---------------------------------------------------------------- KHUNG CHUNG
@@ -335,6 +441,7 @@ function ve() {
 addEventListener("hashchange", () => { tim = ""; if ($("dlg").open) $("dlg").close(); ve(); });
 
 document.addEventListener("input", (e) => {
+  if (e.target.closest && e.target.closest("#edForm")) capNhatSeo();
   if (e.target.id === "tim") { tim = e.target.value; const pos = e.target.selectionStart; ve(); const t = $("tim"); t.focus(); t.setSelectionRange(pos, pos); }
 });
 document.addEventListener("click", async (e) => {
@@ -360,6 +467,7 @@ document.addEventListener("click", async (e) => {
   }
 });
 document.addEventListener("change", async (e) => {
+  if (e.target.closest && e.target.closest("#edForm")) setTimeout(capNhatSeo, 0);
   if (e.target.id === "fGal" && e.target.files.length) {
     const nut = $("edLuu"), files = [...e.target.files]; nut.disabled = true; $("edMsg").textContent = "";
     for (let k = 0; k < files.length; k++) {

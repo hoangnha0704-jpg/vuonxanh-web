@@ -36,3 +36,7 @@ bash vuonxanh-web-main/cai-dat.sh tenmien.com
 - Sao lưu tự động 2h30 sáng mỗi ngày vào `/var/backups/vuonxanh` (giữ 14 ngày), gửi file qua Telegram; tải bản mới nhất ở tab "Đơn hàng & khách"
 - `vx-sao-luu`: sao lưu ngay. `vx-khoi-phuc`: xem danh sách, `vx-khoi-phuc TÊN_FILE`: khôi phục
 - `sitemap.xml` tự cập nhật khi thêm/xóa sản phẩm, bài viết, dự án, danh mục trong trang quản trị
+
+## SEO trong trang quản trị
+- Mỗi sản phẩm, danh mục, bài viết, dự án có khung **Tối ưu SEO**: từ khóa chính, tiêu đề SEO, mô tả SEO, chữ mô tả ảnh (alt), xem trước trên Google và điểm SEO (0–100) kèm từng tiêu chí
+- Máy chủ chèn tiêu đề, mô tả, og:image, canonical, JSON-LD (Product/Article) vào trang khi phục vụ, nên Google, Facebook, Zalo đều thấy nội dung mới. Trang đã xóa trả về 404

@@ -59,7 +59,8 @@ const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").
         app: document.getElementById("app").innerHTML,
         title: document.title,
         desc: document.querySelector('meta[name="description"]').content,
-        product: p.product ? { name: p.product.name, price: p.product.price, short: p.product.short, sku: p.product.msp } : null,
+        image: p.image || null,
+        product: p.product ? { name: p.product.name, price: p.product.price, short: p.product.short, sku: p.product.msp, stock: p.product.stock !== false, image: p.product.art.img || null } : null,
       };
     }, r);
 
@@ -67,7 +68,8 @@ const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").
     let ld = "";
     if (r === "trang-chu") ld = { "@context": "https://schema.org", "@type": "Store", name: shop.name, url, telephone: shop.hotline, address: shop.address, openingHours: "Mo-Su 08:00-20:00" };
     if (info.product) ld = { "@context": "https://schema.org", "@type": "Product", name: info.product.name, description: info.product.short, sku: String(info.product.sku),
-      brand: { "@type": "Brand", name: shop.name }, offers: { "@type": "Offer", priceCurrency: "VND", price: info.product.price, availability: "https://schema.org/InStock", url } };
+      brand: { "@type": "Brand", name: shop.name }, ...(info.product.image ? { image: "https://__DOMAIN__" + info.product.image } : {}),
+      offers: { "@type": "Offer", priceCurrency: "VND", price: info.product.price, availability: info.product.stock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", url } };
 
     const headTags = `
   <meta name="description" content="${escAttr(info.desc)}">
@@ -78,6 +80,7 @@ const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").
   <meta property="og:description" content="${escAttr(info.desc)}">
   <meta property="og:url" content="${url}">
   <meta property="og:site_name" content="${escAttr(shop.name)}">
+  <meta property="og:image" content="https://__DOMAIN__${info.image || "/anh/sp-21.webp"}">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   ${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>` : ""}`;
 

@@ -9,6 +9,8 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const tc = (s) => String(s || "").replace(/(^|[\s(])(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase());
 const cap = (s) => String(s || "").replace(/^(\s*)(\p{Ll})/u, (m, a, b) => a + b.toUpperCase());
 PRODUCTS.forEach((p) => { if (p && p.name) p.name = tc(p.name); });
+// Giải mã ký tự HTML (&amp; …) cho thẻ <title> và mô tả
+const un = (s) => { const t = document.createElement("textarea"); t.innerHTML = String(s || ""); return t.value; };
 const catName = (s) => (s === "dich-vu" ? "Dịch vụ chăm sóc cây" : CATEGORIES[s].name);
 const catHref = (s) => (s === "dich-vu" ? "#dich-vu-cham-soc" : `#danh-muc-${s}`);
 const prodHref = (p) => `#san-pham-${p.id}`;
@@ -208,7 +210,7 @@ function shopPage(cat) {
   shop = { cat, price: new Set(), light: new Set(), sort: "hot" };
   const c = cat ? CATEGORIES[cat] : { name: "Tất cả cây cảnh", intro: "Cây cảnh nội thất, văn phòng, phong thủy và phụ kiện – lọc theo giá và ánh sáng để tìm cây hợp với bạn." };
   const crumbs = cat ? [["Sản phẩm", "#san-pham"]] : [];
-  return { title: c.name, desc: `${c.name} tại ${SHOP.name}: ${c.intro}`, html: head(c.name, crumbs, c.intro) + `
+  return { title: c.name, seoTitle: c.seoTitle, desc: c.seoDesc || `${c.name} tại ${SHOP.name}: ${c.intro}`, html: head(c.name, crumbs, c.intro) + `
   <div class="container shop">
     <aside class="filters" id="filters">
       <div class="f-group"><h5>Danh mục</h5><div class="f-cats">
@@ -269,7 +271,7 @@ function productPage(p) {
   const cat = p.cats[0], plant = cat !== "phu-kien";
   const views = p.art.img ? [PHOTO] : [PHOTO, "#e6eee2", "#efe8dc"];
   const related = SHOWN().filter((x) => x.id !== p.id && x.cats.some((k) => p.cats.includes(k))).slice(0, 4);
-  return { title: p.name, desc: `${p.name} giá ${fmt(p.price)}. ${p.short}`, product: p, html: `
+  return { title: p.name, seoTitle: p.seoTitle, desc: p.seoDesc || `${p.name} giá ${fmt(p.price)}. ${p.short}`, image: p.art.img, product: p, html: `
   <div class="container page-head"><nav class="crumbs"><a href="#trang-chu">Trang chủ</a><span>/</span><a href="#san-pham">Sản phẩm</a><span>/</span><a href="${catHref(cat)}">${catName(cat)}</a><span>/</span><span>${p.name}</span></nav></div>
   <div class="container pd">
     <div class="gallery">
@@ -473,7 +475,7 @@ function dynamicPage(route) {
   if ((m = route.match(/^san-pham-(\d+)$/)) && live(m[1])) return productPage(PRODUCTS[m[1]]);
   if ((m = route.match(/^bai-viet-(\d+)$/)) && POSTS[m[1]] && !POSTS[m[1]].an) {
     const i = +m[1], x = POSTS[i];
-    return { title: x.t, desc: x.p, html: head(x.t, [["Tin tức", "#tin-tuc"]]) + withSide(`
+    return { title: x.t, seoTitle: x.seoTitle, desc: x.seoDesc || x.p, image: x.art.img, html: head(x.t, [["Tin tức", "#tin-tuc"]]) + withSide(`
       <p class="meta">${x.d} · ${SHOP.name}</p>${leadImg(x.art, x.art.bg)}
       <p><b>${x.p}</b></p>${toc(x.s, "Nội dung bài viết")}${sections(x.s)}
       <div class="note-box">Cần tư vấn chọn cây? Gọi <b>${SHOP.hotline}</b> hoặc xem <a href="#danh-muc-trong-nha">cây cảnh trong nhà</a>.</div>`) +
@@ -486,7 +488,7 @@ function dynamicPage(route) {
       <h2>Giải pháp</h2><p>Khảo sát ánh sáng và diện tích, lên phương án bố trí, chọn chậu đồng bộ, bàn giao kèm hướng dẫn chăm sóc.</p>
       <h2>Kết quả</h2><p>Không gian thoáng đãng hơn, khách hàng ký tiếp gói chăm sóc định kỳ.</p>`;
     const anh = (x.gal || []).map((u) => `<button class="gal-item" data-zoom="${u}" aria-label="Phóng to ảnh"><img src="${u}" alt="" loading="lazy"></button>`).join("");
-    return { title: x.t, desc: x.p, html: head(x.t, [["Dự án", "#du-an"]]) + withSide(`
+    return { title: x.t, seoTitle: x.seoTitle, desc: x.seoDesc || x.p, image: x.art.img, html: head(x.t, [["Dự án", "#du-an"]]) + withSide(`
       ${x.loc ? `<p class="meta">📍 ${x.loc}</p>` : ""}${leadImg(x.art, x.art.bg)}<p>${x.p.replace(/…$/, ".")}</p>
       ${noiDung}${x.plants ? `<h2>Cây sử dụng</h2><p>${x.plants}.</p>` : ""}
       ${anh ? `<h2>Hình ảnh công trình</h2><div class="gallery-grid">${anh}</div>` : ""}
@@ -509,7 +511,7 @@ function prettyLinks(root) {
   });
 }
 function setMeta(page) {
-  const desc = (page.desc || `${SHOP.name} – cây cảnh trong nhà, cây văn phòng, cây phong thủy. Giao nhanh, bảo hành 14 ngày, tư vấn chăm sóc trọn đời.`).replace(/<[^>]+>/g, "").slice(0, 160);
+  const desc = un(page.desc || `${SHOP.name} – cây cảnh trong nhà, cây văn phòng, cây phong thủy. Giao nhanh, bảo hành 14 ngày, tư vấn chăm sóc trọn đời.`).replace(/<[^>]+>/g, "").slice(0, 160);
   let m = document.querySelector('meta[name="description"]');
   if (!m) { m = document.createElement("meta"); m.name = "description"; document.head.appendChild(m); }
   m.content = desc;
@@ -527,7 +529,7 @@ function render() {
   if (page.after) page.after();
   setMeta(page);
   if (PRETTY) prettyLinks(document);
-  document.title = page.title ? `${page.title} – ${SHOP.name}` : `${SHOP.name} – Cây cảnh trong nhà & văn phòng`;
+  document.title = page.seoTitle ? un(page.seoTitle) : page.title ? un(`${page.title} – ${SHOP.name}`) : `${SHOP.name} – Cây cảnh trong nhà & văn phòng`;
   scrollTo({ top: 0 });
 }
 addEventListener("hashchange", render);
